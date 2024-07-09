@@ -135,20 +135,7 @@
     </style>
 </head>
 <body>
-    <div class="grid">
-        <div class="thumbnail" onclick="openSlideshow(1)">
-            <img src="http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg" alt="Thumbnail 1">
-            <p>Collection 1</p>
-        </div>
-        <div class="thumbnail" onclick="openSlideshow(2)">
-            <img src="http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg" alt="Thumbnail 2">
-            <p>Collection 2</p>
-        </div>
-        <div class="thumbnail" onclick="openSlideshow(3)">
-            <img src="http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg" alt="Thumbnail 3">
-            <p>Collection 3</p>
-        </div>
-    </div>
+    <div class="grid" id="grid"></div>
 
     <div id="slideshow-container" class="slideshow-container">
         <span class="close" onclick="closeSlideshow()">&times;</span>
@@ -177,8 +164,60 @@
                 "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
                 "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
                 "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            4: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            5: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            6: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            7: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            8: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            9: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            ],
+            10: [
+                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
+                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
             ]
         };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('grid');
+            Object.keys(slideshows).forEach((id) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.classList.add('thumbnail');
+                thumbnail.setAttribute('onclick', `openSlideshow(${id})`);
+                const img = document.createElement('img');
+                img.src = slideshows[id][0];
+                img.alt = `Thumbnail ${id}`;
+                thumbnail.appendChild(img);
+                const p = document.createElement('p');
+                p.textContent = `Collection ${id}`;
+                thumbnail.appendChild(p);
+                grid.appendChild(thumbnail);
+            });
+        });
 
         let currentSlideIndex = 0;
         let currentSlideshow = [];
@@ -231,8 +270,6 @@
                     changeSlide(1);
                 } else if (e.key === 'ArrowLeft') {
                     changeSlide(-1);
-                } else if (e.key === 'Escape') {
-                    closeSlideshow();
                 }
             }
         });
