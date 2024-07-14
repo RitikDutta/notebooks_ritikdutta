@@ -1,8 +1,21 @@
 const slideshows = {
             1: [
-                "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
-                "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
-                "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+                "https://imgur.com/fINt0h8.png",
+                "https://imgur.com/q2hLYh6.png",
+                "https://imgur.com/CjofeFV.png",
+                "https://imgur.com/Nck5Sjs.png",
+                "https://imgur.com/MQSVLYl.png",
+                "https://imgur.com/TyUa2ae.png",
+                "https://imgur.com/8rYwCgs.png",
+                "https://imgur.com/spKjGyp.png",
+                "https://imgur.com/dl1XkV4.png",
+                "https://imgur.com/i5vA1zb.png",
+                "https://imgur.com/fgremCF.png",
+                "https://imgur.com/Xs2bSfo.png",
+                "https://imgur.com/257rDbn.png",
+                "https://imgur.com/YswQBJs.png",
+                "https://imgur.com/RFIy6ou.png",
+                "https://imgur.com/zeNWr6y.png",
             ],
             2: [
                 "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
