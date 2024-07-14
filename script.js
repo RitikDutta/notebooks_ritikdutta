@@ -1,6 +1,6 @@
 const slideshows = {
     1: {
-        title: "First Collection",
+        title: "My Journey",
         images: [
             "https://imgur.com/fINt0h8.png",
             "https://imgur.com/q2hLYh6.png",
