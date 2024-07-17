@@ -21,17 +21,35 @@ const slideshows = {
         ]
     },
     2: {
-        title: "Datamigrato",
+        title: "CWEM",
         images: [
-            "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
-            "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
-            "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            "https://imgur.com/ZKy96ts.png",
+            "https://imgur.com/mTGhSMu.png",
+            "https://imgur.com/NpjSDdb.png",
+            "https://imgur.com/H2dvf5V.png",
+            "https://imgur.com/1nwm2NX.png",
+            "https://imgur.com/EraSS4Q.png",
+            "https://imgur.com/fsAWe5U.png",
+            "https://imgur.com/ARwFdOg.png",
+            "https://imgur.com/wn3mRj0.png",
+            "https://imgur.com/mlye1Bf.png",
+            "https://imgur.com/pVat7fe.png",
+            "https://imgur.com/N1WjPEM.png",
+            "https://imgur.com/4qmKoqr.png",
+            "https://imgur.com/fvIvRqu.png",
+            "https://imgur.com/r8Keo2W.png",
+            "https://imgur.com/sQdaiZy.png",
+            "https://imgur.com/Va1ENBK.png",
+            "https://imgur.com/VHlS1gi.png",
+            "https://imgur.com/GMmIbWn.png",
+            "https://imgur.com/YNQogr6.png",
+            "https://imgur.com/c0Lt9tt.png"
         ]
     },
     3: {
         title: "CWEM",
         images: [
-            "http://stuckincustoms.smugmug.com/Portfolio/i-KscS8CF/0/X3/Burning-Man-Day-1%20%281006%20of%201210%29-X3.jpg",
+            "https://i.imgur.com/RanUVGm.gif",
             "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
             "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
         ]
