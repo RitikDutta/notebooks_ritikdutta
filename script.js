@@ -69,80 +69,86 @@ const slideshows = {
             "https://imgur.com/KgmKm5B.png",
         ]
     }
-    
+
 };
 
 
-        document.addEventListener('DOMContentLoaded', () => {
-        const grid = document.getElementById('grid');
-        Object.keys(slideshows).forEach((id) => {
-            const thumbnail = document.createElement('div');
-            thumbnail.classList.add('thumbnail');
-            thumbnail.setAttribute('onclick', `openSlideshow(${id})`);
-            const img = document.createElement('img');
-            img.src = slideshows[id].images[0];
-            img.alt = slideshows[id].title;
-            thumbnail.appendChild(img);
-            const p = document.createElement('p');
-            p.textContent = slideshows[id].title;
-            thumbnail.appendChild(p);
-            grid.appendChild(thumbnail);
-        });
+document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('grid');
+    Object.keys(slideshows).forEach((id) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.classList.add('thumbnail');
+        thumbnail.setAttribute('onclick', `openSlideshow(${id})`);
+        const img = document.createElement('img');
+        img.src = slideshows[id].images[0];
+        img.alt = slideshows[id].title;
+        thumbnail.appendChild(img);
+        const p = document.createElement('p');
+        p.textContent = slideshows[id].title;
+        thumbnail.appendChild(p);
+        grid.appendChild(thumbnail);
+    });
+});
+
+let currentSlideIndex = 0;
+let currentSlideshow = [];
+
+function openSlideshow(id) {
+    currentSlideshow = slideshows[id].images;
+    currentSlideIndex = 0;
+    const slideshowContainer = document.getElementById('slideshow-container');
+    const slideshowContent = document.getElementById('slideshow-content');
+
+    // Clear previous content
+    slideshowContent.innerHTML = '';
+
+    // Insert new slides
+    currentSlideshow.forEach((imageSrc, index) => {
+        const slide = document.createElement('div');
+        slide.classList.add('slide', 'hidden');
+        if (index === 0) {
+            slide.classList.remove('hidden');
+            slide.classList.add('pop-in');
+        }
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        slide.appendChild(img);
+        slideshowContent.appendChild(slide);
     });
 
-    let currentSlideIndex = 0;
-    let currentSlideshow = [];
+    // Show the slideshow container
+    slideshowContainer.style.display = 'flex';
+}
 
-    function openSlideshow(id) {
-        currentSlideshow = slideshows[id].images;
-        currentSlideIndex = 0;
-        const slideshowContainer = document.getElementById('slideshow-container');
-        const slideshowContent = document.getElementById('slideshow-content');
+function closeSlideshow() {
+    document.getElementById('slideshow-container').style.display = 'none';
+}
 
-        // Clear previous content
-        slideshowContent.innerHTML = '';
-
-        // Insert new slides
-        currentSlideshow.forEach((imageSrc, index) => {
-            const slide = document.createElement('div');
-            slide.classList.add('slide');
-            if (index === 0) {
-                slide.classList.add('active');
-            }
-            const img = document.createElement('img');
-            img.src = imageSrc;
-            slide.appendChild(img);
-            slideshowContent.appendChild(slide);
-        });
-
-        // Show the slideshow container
-        slideshowContainer.style.display = 'flex';
-    }
-
-    function closeSlideshow() {
-        document.getElementById('slideshow-container').style.display = 'none';
-    }
-
-    function showSlide(index) {
-        const slides = document.querySelectorAll('.slide');
-        slides.forEach((slide, i) => {
-            slide.classList.toggle('active', i === index);
-        });
-    }
-
-    function changeSlide(step) {
-        currentSlideIndex = (currentSlideIndex + step + currentSlideshow.length) % currentSlideshow.length;
-        showSlide(currentSlideIndex);
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (document.getElementById('slideshow-container').style.display === 'flex') {
-            if (e.key === 'ArrowRight') {
-                changeSlide(1);
-            } else if (e.key === 'ArrowLeft') {
-                changeSlide(-1);
-            } else if (e.key === 'Escape') {
-                closeSlideshow();
-            }
+function showSlide(index) {
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach((slide, i) => {
+        slide.classList.remove('pop-in', 'fade');
+        slide.classList.add('hidden');
+        if (i === index) {
+            slide.classList.remove('hidden');
+            slide.classList.add('fade');
         }
     });
+}
+
+function changeSlide(step) {
+    currentSlideIndex = (currentSlideIndex + step + currentSlideshow.length) % currentSlideshow.length;
+    showSlide(currentSlideIndex);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (document.getElementById('slideshow-container').style.display === 'flex') {
+        if (e.key === 'ArrowRight') {
+            changeSlide(1);
+        } else if (e.key === 'ArrowLeft') {
+            changeSlide(-1);
+        } else if (e.key === 'Escape') {
+            closeSlideshow();
+        }
+    }
+});
