@@ -47,11 +47,26 @@ const slideshows = {
         ]
     },
     3: {
-        title: "CWEM",
+        title: "Datamigrato",
         images: [
-            "https://i.imgur.com/RanUVGm.gif",
-            "http://stuckincustoms.smugmug.com/Portfolio/i-jQcPqJb/0/X3/Burning-Man-Last-Day-Night%20%28151%20of%201120%29-X3.jpg",
-            "http://stuckincustoms.smugmug.com/Portfolio/i-JSxf5Nm/0/X3/Burning-Man-Day-6%20%28202%20of%201606%29-X3.jpg"
+            "https://imgur.com/DNTfwcY.png",
+            "https://imgur.com/sSjoNHA.png",
+            "https://imgur.com/HU1Nb6U.png",
+            "https://imgur.com/Otd9FYf.png",
+            "https://imgur.com/f1j0D0t.png",
+            "https://imgur.com/ToZZrZi.png",
+            "https://imgur.com/Twi69WY.png",
+            "https://imgur.com/RjQOryR.png",
+            "https://imgur.com/AwEGTpS.png",
+            "https://imgur.com/wpcOOIS.png",
+            "https://imgur.com/tHc9Hyl.png",
+            "https://imgur.com/xiaE5XX.png",
+            "https://imgur.com/wZ5a7z5.png",
+            "https://imgur.com/u2Acf93.png",
+            "https://imgur.com/gR7zgeJ.png",
+            "https://imgur.com/Dqgj7sZ.png",
+            "https://imgur.com/Nb9YynR.png",
+            "https://imgur.com/KgmKm5B.png",
         ]
     }
     
