@@ -68,6 +68,36 @@ const slideshows = {
             "https://imgur.com/Nb9YynR.png",
             "https://imgur.com/KgmKm5B.png",
         ]
+    },
+    4: {
+        title: "Interview Ready",
+        images: [
+            "https://imgur.com/852GKEj",
+            "https://imgur.com/1ouVHNs",
+            "https://imgur.com/JBtag32",
+            "https://imgur.com/zD4d91L",
+            "https://imgur.com/iYcwxdQ",
+            "https://imgur.com/kbhrpC1",
+            "https://imgur.com/tOya4Nl",
+            "https://imgur.com/QjcMskq",
+            "https://imgur.com/Z9fPcq8",
+            "https://imgur.com/1evtp0C",
+            "https://imgur.com/MEAH6oq",
+            "https://imgur.com/OgXOVOb",
+            "https://imgur.com/0ueBJuM",
+            "https://imgur.com/3QiZLEk",
+            "https://imgur.com/q84eV6T",
+            "https://imgur.com/KimoTql",
+            "https://imgur.com/qAYusDa",
+            "https://imgur.com/NGkm1C8",
+            "https://imgur.com/RUBLZc2",
+            "https://imgur.com/QTIpVZa",
+            "https://imgur.com/TdNF69I",
+            "https://imgur.com/C75md2q",
+            "https://imgur.com/mm8Ykt2",
+            "https://imgur.com/G5SjQET",
+            "https://imgur.com/EmA9qHt",
+        ]
     }
 
 };
