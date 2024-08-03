@@ -131,7 +131,7 @@ header h1 {
 
 .prev, .next {
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.1);
     color: white;
     padding: 20px;
     font-size: 24px;
@@ -139,7 +139,7 @@ header h1 {
 }
 
 .prev:hover, .next:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
 @keyframes popIn {

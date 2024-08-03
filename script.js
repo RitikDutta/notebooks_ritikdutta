@@ -118,6 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbnail.appendChild(p);
         grid.appendChild(thumbnail);
     });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const slideId = urlParams.get('slide');
+
+    if (slideId && slideshows[slideId]) {
+        openSlideshow(slideId);
+    }
 });
 
 let currentSlideIndex = 0;
