@@ -6,8 +6,6 @@ const slideshows = {
             "https://imgur.com/q2hLYh6.png",
             "https://imgur.com/CjofeFV.png",
             "https://imgur.com/Nck5Sjs.png",
-            "https://imgur.com/MQSVLYl.png",
-            "https://imgur.com/TyUa2ae.png",
             "https://imgur.com/8rYwCgs.png",
             "https://imgur.com/spKjGyp.png",
             "https://imgur.com/dl1XkV4.png",
@@ -17,6 +15,8 @@ const slideshows = {
             "https://imgur.com/257rDbn.png",
             "https://imgur.com/YswQBJs.png",
             "https://imgur.com/RFIy6ou.png",
+            "https://imgur.com/MQSVLYl.png",
+            "https://imgur.com/TyUa2ae.png",
             "https://imgur.com/zeNWr6y.png",
         ]
     },
