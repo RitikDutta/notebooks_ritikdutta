@@ -2,7 +2,7 @@ const slideshowsProjects = {
     1: {
         title: "My Journey",
         thumbnail: "https://imgur.com/fINt0h8.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1xIuSAjDo6AU5qGjhWt2uXhb1WjfbdN7xdqYGr-hpdjw/embed?start=false&loop=false&delayms=3000"
+        iframeSrc: "https://docs.google.com/presentation/d/1VBVok0t7ldnVEjWNeTI_LhpW1itW85IfBMoydv5mAdY/embed?start=false&loop=false&delayms=3000"
     },
     2: {
         title: "CWEM",
