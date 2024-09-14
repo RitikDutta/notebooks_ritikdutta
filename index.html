@@ -4,26 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/ico" href="me.ico" />
-
     <title>Slides | Ritikdutta</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <header>
         <img src="logo.png" alt="Logo" class="logo">
         <h1>Slides</h1>
     </header>
-    <div class="grid" id="grid"></div>
+
+    <!-- Section: Myself and Projects -->
+    <section>
+        <h2>Myself and Projects</h2>
+        <div class="grid" id="grid-projects"></div>
+    </section>
+
+    <!-- Section: Business Reports -->
+    <section>
+        <h2>Business Reports</h2>
+        <div class="grid" id="grid-business-reports"></div>
+    </section>
 
     <div id="slideshow-container" class="slideshow-container">
         <span class="close" onclick="closeSlideshow()">&times;</span>
         <div class="slideshow-content" id="slideshow-content">
-            <!-- Slides will be dynamically inserted here -->
-        </div>
-        <div class="navigation">
-            <span class="prev" onclick="changeSlide(-1)">&#10094;</span>
-            <span class="next" onclick="changeSlide(1)">&#10095;</span>
+            <!-- The iframe will be inserted here -->
         </div>
     </div>
 </body>
