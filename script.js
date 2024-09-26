@@ -1,22 +1,22 @@
 const slideshowsProjects = {
     1: {
         title: "My Journey",
-        thumbnail: "https://imgur.com/fINt0h8.png",
+        thumbnail: "https://i.imgur.com/fINt0h8.png",
         iframeSrc: "https://docs.google.com/presentation/d/1VBVok0t7ldnVEjWNeTI_LhpW1itW85IfBMoydv5mAdY/embed?start=false&loop=false&delayms=3000"
     },
     2: {
         title: "CWEM",
-        thumbnail: "https://imgur.com/ZKy96ts.png",
+        thumbnail: "https://i.imgur.com/ZKy96ts.png",
         iframeSrc: "https://docs.google.com/presentation/d/1bTUlQlKTaOQhnb1TO9JAZFt5LBOrAv20PRcgaSZEW94/embed?start=false&loop=false&delayms=3000"
     },
     3: {
         title: "Datamigrato",
-        thumbnail: "https://imgur.com/DNTfwcY.png",
+        thumbnail: "https://i.imgur.com/DNTfwcY.png",
         iframeSrc: "https://docs.google.com/presentation/d/1vEOZ5ihHrLx99rIIbu46UuKc7FOAkMhS3DlzECoDIkQ/embed?start=false&loop=false&delayms=3000"
     },
     4: {
         title: "Interview Ready",
-        thumbnail: "https://imgur.com/852GKEj.png",
+        thumbnail: "https://i.imgur.com/852GKEj.png",
         iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
     }
 };
@@ -24,7 +24,7 @@ const slideshowsProjects = {
 const slideshowsBusinessReports = {
     5: {
         title: "Truck Delivery Report",
-        thumbnail: "https://imgur.com/Ack4rc9.png",
+        thumbnail: "https://i.imgur.com/Ack4rc9.png",
         iframeSrc: "https://docs.google.com/presentation/d/1xIuSAjDo6AU5qGjhWt2uXhb1WjfbdN7xdqYGr-hpdjw/embed?start=false&loop=false&delayms=3000"
     }
 };
@@ -33,36 +33,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridProjects = document.getElementById('grid-projects');
     const gridBusinessReports = document.getElementById('grid-business-reports');
 
-    // Generate Myself and Projects thumbnails
-    Object.keys(slideshowsProjects).forEach((id) => {
+    // Function to create a thumbnail element
+    function createThumbnail(id, slideshow, section) {
         const thumbnail = document.createElement('div');
         thumbnail.classList.add('thumbnail');
-        thumbnail.setAttribute('onclick', `openSlideshow(${id}, 'projects')`);
+        thumbnail.setAttribute('onclick', `openSlideshow(${id}, '${section}')`);
+        thumbnail.setAttribute('tabindex', '0'); // Make it focusable for accessibility
+
+        // Image Element
         const img = document.createElement('img');
-        img.src = slideshowsProjects[id].thumbnail;
-        img.alt = slideshowsProjects[id].title;
+        img.src = slideshow.thumbnail;
+        img.alt = `${slideshow.title} Thumbnail`;
         thumbnail.appendChild(img);
-        const p = document.createElement('p');
-        p.textContent = slideshowsProjects[id].title;
-        thumbnail.appendChild(p);
+
+        // Title Element
+        const title = document.createElement('div');
+        title.classList.add('thumbnail-title');
+        title.textContent = slideshow.title;
+        thumbnail.appendChild(title);
+
+        // Add keyboard accessibility
+        thumbnail.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                openSlideshow(id, section);
+            }
+        });
+
+        return thumbnail;
+    }
+
+    // Generate "Myself and Projects" thumbnails
+    Object.keys(slideshowsProjects).forEach((id) => {
+        const slideshow = slideshowsProjects[id];
+        const thumbnail = createThumbnail(id, slideshow, 'projects');
         gridProjects.appendChild(thumbnail);
     });
 
-    // Generate Business Reports thumbnails
+    // Generate "Business Reports" thumbnails
     Object.keys(slideshowsBusinessReports).forEach((id) => {
-        const thumbnail = document.createElement('div');
-        thumbnail.classList.add('thumbnail');
-        thumbnail.setAttribute('onclick', `openSlideshow(${id}, 'business')`);
-        const img = document.createElement('img');
-        img.src = slideshowsBusinessReports[id].thumbnail;
-        img.alt = slideshowsBusinessReports[id].title;
-        thumbnail.appendChild(img);
-        const p = document.createElement('p');
-        p.textContent = slideshowsBusinessReports[id].title;
-        thumbnail.appendChild(p);
+        const slideshow = slideshowsBusinessReports[id];
+        const thumbnail = createThumbnail(id, slideshow, 'business');
         gridBusinessReports.appendChild(thumbnail);
     });
 
+    // Automatically open slideshow if URL parameters are present
     const urlParams = new URLSearchParams(window.location.search);
     const slideId = urlParams.get('slide');
     const section = urlParams.get('section');
@@ -80,32 +94,44 @@ function openSlideshow(id, section) {
         slideshow = slideshowsBusinessReports[id];
     }
 
+    if (!slideshow) {
+        console.error('Slideshow not found for the given ID and section.');
+        return;
+    }
+
     const slideshowContainer = document.getElementById('slideshow-container');
     const slideshowContent = document.getElementById('slideshow-content');
 
     // Clear previous content
     slideshowContent.innerHTML = '';
 
-    // Create iframe
+    // Create iframe with smooth loading animation
+    const iframeWrapper = document.createElement('div');
+    iframeWrapper.classList.add('iframe-wrapper');
+
     const iframe = document.createElement('iframe');
     iframe.src = slideshow.iframeSrc;
     iframe.frameBorder = "0";
     iframe.allowFullscreen = true;
-    iframe.width = "100%";
-    iframe.height = "100%";
-    iframe.style.border = "none";
-    slideshowContent.appendChild(iframe);
+    iframe.loading = "lazy"; // Optimize loading
+    iframeWrapper.appendChild(iframe);
 
-    // Show the slideshow container
-    slideshowContainer.style.display = 'flex';
+    slideshowContent.appendChild(iframeWrapper);
+
+    // Show the slideshow container with animation
+    slideshowContainer.classList.add('active');
 }
 
 function closeSlideshow() {
-    document.getElementById('slideshow-container').style.display = 'none';
+    const slideshowContainer = document.getElementById('slideshow-container');
+    const slideshowContent = document.getElementById('slideshow-content');
+
+    slideshowContainer.classList.remove('active');
+    slideshowContent.innerHTML = '';
 }
 
 document.addEventListener('keydown', (e) => {
-    if (document.getElementById('slideshow-container').style.display === 'flex') {
+    if (document.getElementById('slideshow-container').classList.contains('active')) {
         if (e.key === 'Escape') {
             closeSlideshow();
         }
