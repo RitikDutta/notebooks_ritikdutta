@@ -1,21 +1,25 @@
 const slideshowsProjects = {
     1: {
         title: "My Journey",
+        slug: "my_journey",
         thumbnail: "https://i.imgur.com/fINt0h8.png",
         iframeSrc: "https://docs.google.com/presentation/d/1VBVok0t7ldnVEjWNeTI_LhpW1itW85IfBMoydv5mAdY/embed?start=false&loop=false&delayms=3000"
     },
     2: {
         title: "CWEM",
+        slug: "cwem",
         thumbnail: "https://i.imgur.com/ZKy96ts.png",
         iframeSrc: "https://docs.google.com/presentation/d/1bTUlQlKTaOQhnb1TO9JAZFt5LBOrAv20PRcgaSZEW94/embed?start=false&loop=false&delayms=3000"
     },
     3: {
         title: "Datamigrato",
+        slug: "datamigrato",
         thumbnail: "https://i.imgur.com/DNTfwcY.png",
         iframeSrc: "https://docs.google.com/presentation/d/1vEOZ5ihHrLx99rIIbu46UuKc7FOAkMhS3DlzECoDIkQ/embed?start=false&loop=false&delayms=3000"
     },
     4: {
         title: "Interview Ready",
+        slug: "interview_ready",
         thumbnail: "https://i.imgur.com/852GKEj.png",
         iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
     }
@@ -24,19 +28,28 @@ const slideshowsProjects = {
 const slideshowsBusinessReports = {
     5: {
         title: "Truck Delivery Report",
+        slug: "truck_delivery_report",
         thumbnail: "https://i.imgur.com/Ack4rc9.png",
         iframeSrc: "https://docs.google.com/presentation/d/1xIuSAjDo6AU5qGjhWt2uXhb1WjfbdN7xdqYGr-hpdjw/embed?start=false&loop=false&delayms=3000"
     }
 };
 
-// New mapping from slide names to IDs and sections
-const slideNameMap = {
-    'my_journey': { id: 1, section: 'projects' },
-    'cwem': { id: 2, section: 'projects' },
-    'datamigrato': { id: 3, section: 'projects' },
-    'interview_ready': { id: 4, section: 'projects' },
-    'truck_delivery_report': { id: 5, section: 'business' }
-};
+function getSlideshowBySlug(slug) {
+    // Search in slideshowsProjects
+    for (let id in slideshowsProjects) {
+        if (slideshowsProjects[id].slug === slug) {
+            return { slideshow: slideshowsProjects[id], section: 'projects', id: id };
+        }
+    }
+    // Search in slideshowsBusinessReports
+    for (let id in slideshowsBusinessReports) {
+        if (slideshowsBusinessReports[id].slug === slug) {
+            return { slideshow: slideshowsBusinessReports[id], section: 'business', id: id };
+        }
+    }
+    // Not found
+    return null;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const gridProjects = document.getElementById('grid-projects');
@@ -85,19 +98,31 @@ document.addEventListener('DOMContentLoaded', () => {
         gridBusinessReports.appendChild(thumbnail);
     });
 
-    // Parse the URL path to determine if a slideshow should be opened
+    // Check for slide in URL path or query parameters
+    let slideName = '';
     const path = window.location.pathname;
-    const pathSegments = path.split('/').filter(segment => segment !== '');
+    const pathSegment = path.substring(1);
 
-    if (pathSegments.length > 0) {
-        const slideName = pathSegments[0]; // Assuming the slide name is the first segment
-        const slideInfo = slideNameMap[slideName.toLowerCase()];
+    if (pathSegment.includes('=')) {
+        const [key, value] = pathSegment.split('=');
+        if (key === 'slide') {
+            slideName = value;
+        }
+    } else if (pathSegment) {
+        slideName = pathSegment;
+    } else {
+        // Check query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        slideName = urlParams.get('slide');
+    }
 
-        if (slideInfo) {
-            openSlideshow(slideInfo.id, slideInfo.section);
+    if (slideName) {
+        const result = getSlideshowBySlug(slideName);
+        if (result) {
+            openSlideshow(result.id, result.section);
         } else {
-            // Slide name not found; you may choose to handle this differently
-            console.warn(`No slideshow found for path: ${slideName}`);
+            console.error('Slideshow not found for slug:', slideName);
+            // Optionally, redirect to main page or show an error message
         }
     }
 });
@@ -113,6 +138,12 @@ function openSlideshow(id, section) {
     if (!slideshow) {
         console.error('Slideshow not found for the given ID and section.');
         return;
+    }
+
+    // Update the URL without reloading the page
+    if (history.pushState) {
+        const newUrl = `/slide=${slideshow.slug}`;
+        history.pushState(null, null, newUrl);
     }
 
     const slideshowContainer = document.getElementById('slideshow-container');
@@ -144,6 +175,11 @@ function closeSlideshow() {
 
     slideshowContainer.classList.remove('active');
     slideshowContent.innerHTML = '';
+
+    // Restore the original URL
+    if (history.pushState) {
+        history.pushState(null, null, '/');
+    }
 }
 
 document.addEventListener('keydown', (e) => {
