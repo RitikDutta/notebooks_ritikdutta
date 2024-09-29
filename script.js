@@ -29,6 +29,15 @@ const slideshowsBusinessReports = {
     }
 };
 
+// New mapping from slide names to IDs and sections
+const slideNameMap = {
+    'my_journey': { id: 1, section: 'projects' },
+    'cwem': { id: 2, section: 'projects' },
+    'datamigrato': { id: 3, section: 'projects' },
+    'interview_ready': { id: 4, section: 'projects' },
+    'truck_delivery_report': { id: 5, section: 'business' }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const gridProjects = document.getElementById('grid-projects');
     const gridBusinessReports = document.getElementById('grid-business-reports');
@@ -76,13 +85,20 @@ document.addEventListener('DOMContentLoaded', () => {
         gridBusinessReports.appendChild(thumbnail);
     });
 
-    // Automatically open slideshow if URL parameters are present
-    const urlParams = new URLSearchParams(window.location.search);
-    const slideId = urlParams.get('slide');
-    const section = urlParams.get('section');
+    // Parse the URL path to determine if a slideshow should be opened
+    const path = window.location.pathname;
+    const pathSegments = path.split('/').filter(segment => segment !== '');
 
-    if (slideId && section) {
-        openSlideshow(slideId, section);
+    if (pathSegments.length > 0) {
+        const slideName = pathSegments[0]; // Assuming the slide name is the first segment
+        const slideInfo = slideNameMap[slideName.toLowerCase()];
+
+        if (slideInfo) {
+            openSlideshow(slideInfo.id, slideInfo.section);
+        } else {
+            // Slide name not found; you may choose to handle this differently
+            console.warn(`No slideshow found for path: ${slideName}`);
+        }
     }
 });
 
