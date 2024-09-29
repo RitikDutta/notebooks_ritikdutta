@@ -34,6 +34,7 @@ const slideshowsBusinessReports = {
     }
 };
 
+// Function to retrieve slideshow by slug
 function getSlideshowBySlug(slug) {
     // Search in slideshowsProjects
     for (let id in slideshowsProjects) {
@@ -98,34 +99,28 @@ document.addEventListener('DOMContentLoaded', () => {
         gridBusinessReports.appendChild(thumbnail);
     });
 
-    // Check for slide in URL path or query parameters
-    let slideName = '';
-    const path = window.location.pathname;
-    const pathSegment = path.substring(1);
+    // Check the URL hash for a slide slug
+    handleHashChange();
 
-    if (pathSegment.includes('=')) {
-        const [key, value] = pathSegment.split('=');
-        if (key === 'slide') {
-            slideName = value;
-        }
-    } else if (pathSegment) {
-        slideName = pathSegment;
-    } else {
-        // Check query parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        slideName = urlParams.get('slide');
-    }
-
-    if (slideName) {
-        const result = getSlideshowBySlug(slideName);
-        if (result) {
-            openSlideshow(result.id, result.section);
-        } else {
-            console.error('Slideshow not found for slug:', slideName);
-            // Optionally, redirect to main page or show an error message
-        }
-    }
+    // Listen for hash changes (e.g., when user navigates back)
+    window.addEventListener('hashchange', handleHashChange);
 });
+
+function handleHashChange() {
+    const hash = window.location.hash; // e.g., #slide=cwem
+    if (hash.startsWith('#slide=')) {
+        const slideName = hash.substring(7); // Extract 'cwem'
+        if (slideName) {
+            const result = getSlideshowBySlug(slideName);
+            if (result) {
+                openSlideshow(result.id, result.section);
+            } else {
+                console.error('Slideshow not found for slug:', slideName);
+                // Optionally, display an error message or redirect to main page
+            }
+        }
+    }
+}
 
 function openSlideshow(id, section) {
     let slideshow;
@@ -140,10 +135,13 @@ function openSlideshow(id, section) {
         return;
     }
 
-    // Update the URL without reloading the page
-    if (history.pushState) {
-        const newUrl = `/slide=${slideshow.slug}`;
-        history.pushState(null, null, newUrl);
+    // Update the URL hash without reloading the page
+    if (history.replaceState) {
+        const newHash = `#slide=${slideshow.slug}`;
+        history.replaceState(null, null, newHash);
+    } else {
+        // Fallback for older browsers
+        window.location.hash = `slide=${slideshow.slug}`;
     }
 
     const slideshowContainer = document.getElementById('slideshow-container');
@@ -176,9 +174,12 @@ function closeSlideshow() {
     slideshowContainer.classList.remove('active');
     slideshowContent.innerHTML = '';
 
-    // Restore the original URL
-    if (history.pushState) {
-        history.pushState(null, null, '/');
+    // Remove the hash from the URL
+    if (history.replaceState) {
+        history.replaceState(null, null, ' ');
+    } else {
+        // Fallback for older browsers
+        window.location.hash = '';
     }
 }
 
