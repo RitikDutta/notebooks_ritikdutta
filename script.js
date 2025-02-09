@@ -22,6 +22,12 @@ const slideshowsProjects = {
         slug: "interview_ready",
         thumbnail: "https://i.imgur.com/852GKEj.png",
         iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
+    },
+    5: {
+        title: "CWEM-Lite",
+        slug: "cwem-lite",
+        thumbnail: "https://i.imgur.com/852GKEj.png",
+        iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
     }
 };
 
@@ -30,7 +36,7 @@ const slideshowsBusinessReports = {
         title: "Truck Delivery Report",
         slug: "truck_delivery_report",
         thumbnail: "https://i.imgur.com/Ack4rc9.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1xIuSAjDo6AU5qGjhWt2uXhb1WjfbdN7xdqYGr-hpdjw/embed?start=false&loop=false&delayms=3000"
+        iframeSrc: "https://docs.google.com/presentation/d/e/2PACX-1vS3GkC1uIy5Un0eV7eTQctNbKDzR0FJFxWovXjK7flGDrYAKyNh0hNYUlfJgTXk1HrHRXnjJSraMB6z/embed?start=false&loop=false&delayms=3000"
     }
 };
 
