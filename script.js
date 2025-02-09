@@ -8,19 +8,19 @@ const slideshowsProjects = {
     2: {
         title: "CWEM",
         slug: "cwem",
-        thumbnail: "https://i.imgur.com/ZKy96ts.png",
+        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/cwem.png",
         iframeSrc: "https://docs.google.com/presentation/d/1bTUlQlKTaOQhnb1TO9JAZFt5LBOrAv20PRcgaSZEW94/embed?start=false&loop=false&delayms=3000"
     },
     3: {
         title: "Datamigrato",
         slug: "datamigrato",
-        thumbnail: "https://i.imgur.com/DNTfwcY.png",
+        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/datamigrato.jpg",
         iframeSrc: "https://docs.google.com/presentation/d/1vEOZ5ihHrLx99rIIbu46UuKc7FOAkMhS3DlzECoDIkQ/embed?start=false&loop=false&delayms=3000"
     },
     4: {
         title: "Interview Ready",
         slug: "interview_ready",
-        thumbnail: "https://i.imgur.com/852GKEj.png",
+        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/interview_ready.png",
         iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
     },
     5: {
