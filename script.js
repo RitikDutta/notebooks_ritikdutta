@@ -28,6 +28,12 @@ const slideshowsProjects = {
         slug: "cwem-lite",
         thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/cwem_lite.png",
         iframeSrc: "https://docs.google.com/presentation/d/e/2PACX-1vS3GkC1uIy5Un0eV7eTQctNbKDzR0FJFxWovXjK7flGDrYAKyNh0hNYUlfJgTXk1HrHRXnjJSraMB6z/embed?start=false&loop=false&delayms=3000"
+    },
+    6: {
+        title: "TimeStream",
+        slug: "timestream",
+        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/timestream.png",
+        iframeSrc: "https://docs.google.com/presentation/d/e/2PACX-1vRwYbxowSm9DPbSnYy9dCZIeAykEyDFb3RBVh8-ntOd8qMM4-tBEf975X4jo1RzBW3tSAgtMizXGAw-/embed?start=false&loop=false&delayms=3000"
     }
 };
 
