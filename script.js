@@ -4,7 +4,7 @@ const notebooksML = {
   1: {
     title: "Regression Notebook",
     slug: "regression_notebook",
-    gist: "https://gist.github.com/RitikDutta/3cf3f7d37313d1571f84c661617d6c2b.js",
+    gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
     thumbnail: "https://www.itarian.com/images/business-report.jpg",
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> Linear Regression with scikit-learn"
@@ -13,7 +13,7 @@ const notebooksML = {
     title: "Classification Notebook",
     slug: "classification_notebook",
     thumbnail: "https://via.placeholder.com/300x200?text=Classification",
-    gist: "https://gist.github.com/RitikDutta/your_classification_gist.js",
+    gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
   },
