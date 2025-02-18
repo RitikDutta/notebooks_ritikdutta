@@ -1,204 +1,235 @@
-const slideshowsProjects = {
-    1: {
-        title: "My Journey",
-        slug: "my_journey",
-        thumbnail: "https://i.imgur.com/fINt0h8.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1VBVok0t7ldnVEjWNeTI_LhpW1itW85IfBMoydv5mAdY/embed?start=false&loop=false&delayms=3000"
-    },
-    2: {
-        title: "CWEM",
-        slug: "cwem",
-        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/cwem.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1bTUlQlKTaOQhnb1TO9JAZFt5LBOrAv20PRcgaSZEW94/embed?start=false&loop=false&delayms=3000"
-    },
-    3: {
-        title: "Datamigrato",
-        slug: "datamigrato",
-        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/datamigrato.jpg",
-        iframeSrc: "https://docs.google.com/presentation/d/1vEOZ5ihHrLx99rIIbu46UuKc7FOAkMhS3DlzECoDIkQ/embed?start=false&loop=false&delayms=3000"
-    },
-    4: {
-        title: "Interview Ready",
-        slug: "interview_ready",
-        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/interview_ready.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1fqAoQrxB96RO9t_8xdFXW2guJn_rx-aurvpUnPNrQPs/embed?start=false&loop=false&delayms=3000"
-    },
-    5: {
-        title: "CWEM-Lite",
-        slug: "cwem-lite",
-        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/cwem_lite.png",
-        iframeSrc: "https://docs.google.com/presentation/d/e/2PACX-1vS3GkC1uIy5Un0eV7eTQctNbKDzR0FJFxWovXjK7flGDrYAKyNh0hNYUlfJgTXk1HrHRXnjJSraMB6z/embed?start=false&loop=false&delayms=3000"
-    },
-    6: {
-        title: "TimeStream",
-        slug: "timestream",
-        thumbnail: "https://raw.githubusercontent.com/RitikDutta/slides_ritikdutta/refs/heads/master/media/timestream.png",
-        iframeSrc: "https://docs.google.com/presentation/d/e/2PACX-1vRwYbxowSm9DPbSnYy9dCZIeAykEyDFb3RBVh8-ntOd8qMM4-tBEf975X4jo1RzBW3tSAgtMizXGAw-/embed?start=false&loop=false&delayms=3000"
-    }
+// --- Data for Notebooks ---
+// Machine Learning Notebooks
+const notebooksML = {
+  1: {
+    title: "Regression Notebook",
+    slug: "regression_notebook",
+    gist: "https://gist.github.com/RitikDutta/3cf3f7d37313d1571f84c661617d6c2b.js",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    details:
+      "<strong>Task:</strong> Regression<br><strong>Example:</strong> Linear Regression with scikit-learn"
+  },
+  2: {
+    title: "Classification Notebook",
+    slug: "classification_notebook",
+    thumbnail: "https://via.placeholder.com/300x200?text=Classification",
+    gist: "https://gist.github.com/RitikDutta/your_classification_gist.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
+  },
+  3: {
+    title: "Clustering Notebook",
+    slug: "clustering_notebook",
+    thumbnail: "https://via.placeholder.com/300x200?text=Clustering",
+    gist: "https://gist.github.com/RitikDutta/your_clustering_gist.js",
+    details:
+      "<strong>Task:</strong> Clustering<br><strong>Example:</strong> K-Means on customer data"
+  }
 };
 
-const slideshowsBusinessReports = {
-    5: {
-        title: "Truck Delivery Report",
-        slug: "truck_delivery_report",
-        thumbnail: "https://i.imgur.com/Ack4rc9.png",
-        iframeSrc: "https://docs.google.com/presentation/d/1xIuSAjDo6AU5qGjhWt2uXhb1WjfbdN7xdqYGr-hpdjw/embed?start=false&loop=false&delayms=3000"
-    }
+// Business Notebooks
+const notebooksBusiness = {
+  1: {
+    title: "Business Analytics Notebook",
+    slug: "business_analytics_notebook",
+    thumbnail: "https://via.placeholder.com/300x200?text=Business+Analytics",
+    gist: "https://gist.github.com/RitikDutta/your_business_gist.js",
+    details:
+      "<strong>Task:</strong> Data Analysis<br><strong>Example:</strong> Sales trends with pandas"
+  }
 };
 
-// Function to retrieve slideshow by slug
-function getSlideshowBySlug(slug) {
-    // Search in slideshowsProjects
-    for (let id in slideshowsProjects) {
-        if (slideshowsProjects[id].slug === slug) {
-            return { slideshow: slideshowsProjects[id], section: 'projects', id: id };
-        }
+// --- Helper: Create a thumbnail element ---
+function createNotebookThumbnail(id, notebook, section) {
+  const thumbnail = document.createElement("div");
+  thumbnail.classList.add("thumbnail");
+  thumbnail.style.position = "relative";
+  thumbnail.setAttribute("tabindex", "0"); // for keyboard accessibility
+
+  // When clicking the thumbnail, open the notebook.
+  thumbnail.addEventListener("click", function (e) {
+    openNotebook(id, section);
+  });
+  thumbnail.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      openNotebook(id, section);
     }
-    // Search in slideshowsBusinessReports
-    for (let id in slideshowsBusinessReports) {
-        if (slideshowsBusinessReports[id].slug === slug) {
-            return { slideshow: slideshowsBusinessReports[id], section: 'business', id: id };
-        }
-    }
-    // Not found
-    return null;
+  });
+
+  // Image element
+  const img = document.createElement("img");
+  img.src = notebook.thumbnail;
+  img.alt = `${notebook.title} Thumbnail`;
+  thumbnail.appendChild(img);
+
+  // Title element
+  const title = document.createElement("div");
+  title.classList.add("thumbnail-title");
+  title.textContent = notebook.title;
+  thumbnail.appendChild(title);
+
+  // Extra details panel (hidden by default, revealed on hover)
+  const details = document.createElement("div");
+  details.classList.add("details");
+  details.innerHTML = notebook.details;
+  thumbnail.appendChild(details);
+
+  return thumbnail;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const gridProjects = document.getElementById('grid-projects');
-    const gridBusinessReports = document.getElementById('grid-business-reports');
+// --- Populate the grids when DOM is ready ---
+document.addEventListener("DOMContentLoaded", () => {
+  const gridML = document.getElementById("grid-ml");
+  const gridBusiness = document.getElementById("grid-business");
 
-    // Function to create a thumbnail element
-    function createThumbnail(id, slideshow, section) {
-        const thumbnail = document.createElement('div');
-        thumbnail.classList.add('thumbnail');
-        thumbnail.setAttribute('onclick', `openSlideshow(${id}, '${section}')`);
-        thumbnail.setAttribute('tabindex', '0'); // Make it focusable for accessibility
+  // Insert ML notebook thumbnails
+  Object.keys(notebooksML).forEach((id) => {
+    const notebook = notebooksML[id];
+    const thumb = createNotebookThumbnail(id, notebook, "ml");
+    gridML.appendChild(thumb);
+  });
 
-        // Image Element
-        const img = document.createElement('img');
-        img.src = slideshow.thumbnail;
-        img.alt = `${slideshow.title} Thumbnail`;
-        thumbnail.appendChild(img);
+  // Insert Business notebook thumbnails
+  Object.keys(notebooksBusiness).forEach((id) => {
+    const notebook = notebooksBusiness[id];
+    const thumb = createNotebookThumbnail(id, notebook, "business");
+    gridBusiness.appendChild(thumb);
+  });
 
-        // Title Element
-        const title = document.createElement('div');
-        title.classList.add('thumbnail-title');
-        title.textContent = slideshow.title;
-        thumbnail.appendChild(title);
-
-        // Add keyboard accessibility
-        thumbnail.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                openSlideshow(id, section);
-            }
-        });
-
-        return thumbnail;
-    }
-
-    // Generate "Myself and Projects" thumbnails
-    Object.keys(slideshowsProjects).forEach((id) => {
-        const slideshow = slideshowsProjects[id];
-        const thumbnail = createThumbnail(id, slideshow, 'projects');
-        gridProjects.appendChild(thumbnail);
-    });
-
-    // Generate "Business Reports" thumbnails
-    Object.keys(slideshowsBusinessReports).forEach((id) => {
-        const slideshow = slideshowsBusinessReports[id];
-        const thumbnail = createThumbnail(id, slideshow, 'business');
-        gridBusinessReports.appendChild(thumbnail);
-    });
-
-    // Check the URL hash for a slide slug
-    handleHashChange();
-
-    // Listen for hash changes (e.g., when user navigates back)
-    window.addEventListener('hashchange', handleHashChange);
+  // Check URL hash for a notebook slug
+  handleNotebookHash();
+  window.addEventListener("hashchange", handleNotebookHash);
 });
 
-function handleHashChange() {
-    const hash = window.location.hash; // e.g., #slide=cwem
-    if (hash.startsWith('#slide=')) {
-        const slideName = hash.substring(7); // Extract 'cwem'
-        if (slideName) {
-            const result = getSlideshowBySlug(slideName);
-            if (result) {
-                openSlideshow(result.id, result.section);
-            } else {
-                console.error('Slideshow not found for slug:', slideName);
-                // Optionally, display an error message or redirect to main page
-            }
-        }
+// --- Retrieve notebook by slug ---
+function getNotebookBySlug(slug) {
+  for (let id in notebooksML) {
+    if (notebooksML[id].slug === slug) {
+      return { notebook: notebooksML[id], section: "ml", id: id };
     }
+  }
+  for (let id in notebooksBusiness) {
+    if (notebooksBusiness[id].slug === slug) {
+      return { notebook: notebooksBusiness[id], section: "business", id: id };
+    }
+  }
+  return null;
 }
 
-function openSlideshow(id, section) {
-    let slideshow;
-    if (section === 'projects') {
-        slideshow = slideshowsProjects[id];
-    } else if (section === 'business') {
-        slideshow = slideshowsBusinessReports[id];
-    }
+// --- Open a notebook in the viewer (embed the gist inside an iframe) ---
+function openNotebook(id, section) {
+  let notebook;
+  if (section === "ml") {
+    notebook = notebooksML[id];
+  } else if (section === "business") {
+    notebook = notebooksBusiness[id];
+  }
 
-    if (!slideshow) {
-        console.error('Slideshow not found for the given ID and section.');
-        return;
-    }
+  if (!notebook) {
+    console.error("Notebook not found for the given ID and section.");
+    return;
+  }
 
-    // Update the URL hash without reloading the page
-    if (history.replaceState) {
-        const newHash = `#slide=${slideshow.slug}`;
-        history.replaceState(null, null, newHash);
-    } else {
-        // Fallback for older browsers
-        window.location.hash = `slide=${slideshow.slug}`;
-    }
+  // Update the URL hash (without reloading)
+  if (history.replaceState) {
+    const newHash = `#notebook=${notebook.slug}`;
+    history.replaceState(null, null, newHash);
+  } else {
+    window.location.hash = `notebook=${notebook.slug}`;
+  }
 
-    const slideshowContainer = document.getElementById('slideshow-container');
-    const slideshowContent = document.getElementById('slideshow-content');
+  const viewerContainer = document.getElementById("notebook-viewer");
+  const viewerContent = document.getElementById("viewer-content");
 
-    // Clear previous content
-    slideshowContent.innerHTML = '';
+  // Clear previous content
+  viewerContent.innerHTML = "";
 
-    // Create iframe with smooth loading animation
-    const iframeWrapper = document.createElement('div');
-    iframeWrapper.classList.add('iframe-wrapper');
+  // Create an iframe element (using about:blank)
+  const iframe = document.createElement("iframe");
+  iframe.frameBorder = "0";
+  iframe.allowFullscreen = true;
+  iframe.loading = "lazy";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.padding = "2%";
 
-    const iframe = document.createElement('iframe');
-    iframe.src = slideshow.iframeSrc;
-    iframe.frameBorder = "0";
-    iframe.allowFullscreen = true;
-    iframe.loading = "lazy"; // Optimize loading
-    iframeWrapper.appendChild(iframe);
+  // Append the iframe to the viewer content
+  viewerContent.appendChild(iframe);
 
-    slideshowContent.appendChild(iframeWrapper);
+  // Embed the gist inside the iframe if available
+  if (notebook.gist) {
+    embedGistInIframe(iframe, notebook.gist);
+  } else if (notebook.iframeSrc) {
+    iframe.src = notebook.iframeSrc;
+  }
 
-    // Show the slideshow container with animation
-    slideshowContainer.classList.add('active');
+  viewerContainer.classList.add("active");
 }
 
-function closeSlideshow() {
-    const slideshowContainer = document.getElementById('slideshow-container');
-    const slideshowContent = document.getElementById('slideshow-content');
-
-    slideshowContainer.classList.remove('active');
-    slideshowContent.innerHTML = '';
-
-    // Remove the hash from the URL
-    if (history.replaceState) {
-        history.replaceState(null, null, ' ');
-    } else {
-        // Fallback for older browsers
-        window.location.hash = '';
-    }
+// --- Function to embed a GitHub Gist inside an iframe ---
+function embedGistInIframe(iframe, gistUrl) {
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <base target="_parent">
+        <style>
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+          }
+          .gist {
+            width: 100%;
+          }
+        </style>
+      </head>
+      <body>
+        <script src="${gistUrl}"></script>
+      </body>
+    </html>
+  `);
+  doc.close();
 }
 
-document.addEventListener('keydown', (e) => {
-    if (document.getElementById('slideshow-container').classList.contains('active')) {
-        if (e.key === 'Escape') {
-            closeSlideshow();
-        }
+// --- Close the notebook viewer ---
+function closeNotebookViewer() {
+  const viewerContainer = document.getElementById("notebook-viewer");
+  const viewerContent = document.getElementById("viewer-content");
+
+  viewerContainer.classList.remove("active");
+  viewerContent.innerHTML = "";
+
+  if (history.replaceState) {
+    history.replaceState(null, null, " ");
+  } else {
+    window.location.hash = "";
+  }
+}
+
+// --- Handle URL hash to open notebook if slug is present ---
+function handleNotebookHash() {
+  const hash = window.location.hash; // e.g. #notebook=regression_notebook
+  if (hash.startsWith("#notebook=")) {
+    const slug = hash.substring(10);
+    if (slug) {
+      const result = getNotebookBySlug(slug);
+      if (result) {
+        openNotebook(result.id, result.section);
+      } else {
+        console.error("Notebook not found for slug:", slug);
+      }
     }
+  }
+}
+
+// --- Close viewer on Escape key ---
+document.addEventListener("keydown", (e) => {
+  const viewerContainer = document.getElementById("notebook-viewer");
+  if (viewerContainer.classList.contains("active") && e.key === "Escape") {
+    closeNotebookViewer();
+  }
 });

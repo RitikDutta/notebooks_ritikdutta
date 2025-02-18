@@ -1,47 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/ico" href="me.ico" />
-    <title>Slides | Ritikdutta</title>
-    <link rel="stylesheet" href="styles.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notebooks | Ritikdutta</title>
+    <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <div class="container">
-            <img src="logo.png" alt="Logo" class="logo">
-            <h1>Slides</h1>
-        </div>
+      <div class="container">
+        <img src="logo.png" alt="Logo" class="logo" />
+        <h1>Notebooks</h1>
+      </div>
     </header>
 
-    <!-- Section: Myself and Projects -->
+    <!-- Section: Machine Learning Notebooks -->
     <section>
-        <div class="section-header">
-            <h2>Myself and Projects</h2>
-        </div>
-        <div class="grid" id="grid-projects">
-            <!-- Project thumbnails will be dynamically inserted here -->
-        </div>
+      <div class="section-header">
+        <h2>Machine Learning Notebooks</h2>
+      </div>
+      <div class="grid" id="grid-ml">
+        <!-- ML notebook thumbnails will be inserted here -->
+      </div>
     </section>
 
-    <!-- Section: Business Reports -->
+    <!-- Section: Business Notebooks -->
     <section>
-        <div class="section-header">
-            <h2>Business Reports</h2>
-        </div>
-        <div class="grid" id="grid-business-reports">
-            <!-- Business report thumbnails will be dynamically inserted here -->
-        </div>
+      <div class="section-header">
+        <h2>Business Notebooks</h2>
+      </div>
+      <div class="grid" id="grid-business">
+        <!-- Business notebook thumbnails will be inserted here -->
+      </div>
     </section>
 
-    <!-- Slideshow Container -->
-    <div id="slideshow-container" class="slideshow-container hidden">
-        <span class="close" onclick="closeSlideshow()" aria-label="Close Slideshow">&times;</span>
-        <div class="slideshow-content" id="slideshow-content">
-            <!-- The iframe will be inserted here dynamically -->
-        </div>
+    <!-- Notebook Viewer Container -->
+    <div id="notebook-viewer" class="viewer-container">
+      <span class="close" onclick="closeNotebookViewer()" aria-label="Close Viewer">&times;</span>
+      <div class="viewer-content" id="viewer-content">
+        <!-- The iframe will be inserted here dynamically -->
+      </div>
     </div>
-</body>
+  </body>
 </html>
