@@ -12,18 +12,18 @@ const notebooksML = {
   2: {
     title: "Classification Notebook",
     slug: "classification_notebook",
-    thumbnail: "https://via.placeholder.com/300x200?text=Classification",
+    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
     gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
   },
   3: {
-    title: "Clustering Notebook",
+    title: "Gold Price Prediction",
     slug: "clustering_notebook",
-    thumbnail: "https://via.placeholder.com/300x200?text=Clustering",
-    gist: "https://gist.github.com/RitikDutta/your_clustering_gist.js",
+    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
+    gist: "https://gist.github.com/RitikDutta/4b0fe1f63b7fab7a7155249b753d4b85.js",
     details:
-      "<strong>Task:</strong> Clustering<br><strong>Example:</strong> K-Means on customer data"
+      "<strong>Task:</strong> Time Series<br><strong>Example:</strong> K-Means on customer data"
   }
 };
 
