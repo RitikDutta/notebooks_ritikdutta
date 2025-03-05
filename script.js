@@ -26,6 +26,14 @@ const notebooksML = {
       "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
   },  
   4: {
+    title: "Multi Model Comparison",
+    slug: "multi model",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/888582721bcbe4c8d247829b35e3703f.js",
+    details:
+      "<strong>Task:</strong> Regression<br><strong>Example:</strong> Linear Regression, Robust Regression, Ridge Rigression, Lasso Regression, ElasticNet Regression, Polinomial Regression, Stocastic Gradient Descent, Artificial Neural Network, Random Forest Regressor, SVM Regressor"
+  },
+  5: {
     title: "Insurence Charges",
     slug: "linear regression 2",
     thumbnail: "https://www.itarian.com/images/business-report.jpg",
