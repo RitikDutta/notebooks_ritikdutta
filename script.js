@@ -2,41 +2,41 @@
 // Machine Learning Notebooks
 const notebooksML = {
   1: {
-    title: "Regression Notebook",
+    title: "EDA and Classification predictive modelling",
     slug: "regression_notebook",
     gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
     thumbnail: "https://www.itarian.com/images/business-report.jpg",
     details:
-      "<strong>Task:</strong> Regression<br><strong>Example:</strong> Linear Regression with scikit-learn"
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> Binary Classification And EDA"
   },
-  2: {
-    title: "Classification Notebook",
-    slug: "classification_notebook",
-    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
-    gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
-    details:
-      "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
-  },
-  3: {
-    title: "Gold Price Prediction",
-    slug: "clustering_notebook",
-    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
-    gist: "https://gist.github.com/RitikDutta/4b0fe1f63b7fab7a7155249b753d4b85.js",
-    details:
-      "<strong>Task:</strong> Time Series<br><strong>Example:</strong> K-Means on customer data"
-  }
+  // 2: {
+  //   title: "Classification Notebook",
+  //   slug: "classification_notebook",
+  //   thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
+  //   gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
+  //   details:
+  //     "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
+  // },
+  // 3: {
+  //   title: "Gold Price Prediction",
+  //   slug: "clustering_notebook",
+  //   thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
+  //   gist: "https://gist.github.com/RitikDutta/4b0fe1f63b7fab7a7155249b753d4b85.js",
+  //   details:
+  //     "<strong>Task:</strong> Time Series<br><strong>Example:</strong> K-Means on customer data"
+  // }
 };
 
 // Business Notebooks
 const notebooksBusiness = {
-  1: {
-    title: "Business Analytics Notebook",
-    slug: "business_analytics_notebook",
-    thumbnail: "https://via.placeholder.com/300x200?text=Business+Analytics",
-    gist: "https://gist.github.com/RitikDutta/your_business_gist.js",
-    details:
-      "<strong>Task:</strong> Data Analysis<br><strong>Example:</strong> Sales trends with pandas"
-  }
+  // 1: {
+  //   title: "Business Analytics Notebook",
+  //   slug: "business_analytics_notebook",
+  //   thumbnail: "https://via.placeholder.com/300x200?text=Business+Analytics",
+  //   gist: "https://gist.github.com/RitikDutta/your_business_gist.js",
+  //   details:
+  //     "<strong>Task:</strong> Data Analysis<br><strong>Example:</strong> Sales trends with pandas"
+  // }
 };
 
 // --- Helper: Create a thumbnail element ---
