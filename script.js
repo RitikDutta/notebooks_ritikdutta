@@ -9,14 +9,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Binary Classification And EDA"
   },
-  // 2: {
-  //   title: "Classification Notebook",
-  //   slug: "classification_notebook",
-  //   thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
-  //   gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
-  //   details:
-  //     "<strong>Task:</strong> Classification<br><strong>Example:</strong> SVM for image recognition"
-  // },
+  2: {
+    title: "Car Price Prediction EDA",
+    slug: "classification_notebook",
+    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
+    gist: "https://gist.github.com/RitikDutta/333512e9e5dbef7ae44bb0e22528f5da.js",
+    details:
+      "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
+  },
   // 3: {
   //   title: "Gold Price Prediction",
   //   slug: "clustering_notebook",
