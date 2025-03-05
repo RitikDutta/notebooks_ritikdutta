@@ -31,7 +31,7 @@ const notebooksML = {
     thumbnail: "https://www.itarian.com/images/business-report.jpg",
     gist: "https://gist.github.com/RitikDutta/888582721bcbe4c8d247829b35e3703f.js",
     details:
-      "<strong>Task:</strong> Regression<br><strong>Example:</strong> Linear Regression, Robust Regression, Ridge Rigression, Lasso Regression, ElasticNet Regression, Polinomial Regression, Stocastic Gradient Descent, Artificial Neural Network, Random Forest Regressor, SVM Regressor"
+      "<strong>Task:</strong> Regression<br><strong>Example:</strong> (Linear, Robust, Ridge, Lasso, ElasticNet, Polinomial, RF, SVM) Regression, SGD, ANN"
   },
   5: {
     title: "Insurence Charges",
