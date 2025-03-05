@@ -11,20 +11,20 @@ const notebooksML = {
   },
   2: {
     title: "Car Price Prediction EDA",
-    slug: "classification_notebook",
+    slug: "logistic regression1",
     thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
     gist: "https://gist.github.com/RitikDutta/333512e9e5dbef7ae44bb0e22528f5da.js",
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
   },
-  // 3: {
-  //   title: "Gold Price Prediction",
-  //   slug: "clustering_notebook",
-  //   thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
-  //   gist: "https://gist.github.com/RitikDutta/4b0fe1f63b7fab7a7155249b753d4b85.js",
-  //   details:
-  //     "<strong>Task:</strong> Time Series<br><strong>Example:</strong> K-Means on customer data"
-  // }
+  3: {
+    title: "Employee Salary Prediction",
+    slug: "logistic regression2",
+    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
+    gist: "https://gist.github.com/RitikDutta/24c4095a6b39097789c7f2e06000c389.js",
+    details:
+      "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
+  }
 };
 
 // Business Notebooks
