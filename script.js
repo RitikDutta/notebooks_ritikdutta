@@ -12,7 +12,7 @@ const notebooksML = {
   2: {
     title: "Car Price Prediction EDA",
     slug: "logistic regression1",
-    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
     gist: "https://gist.github.com/RitikDutta/333512e9e5dbef7ae44bb0e22528f5da.js",
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
@@ -20,11 +20,19 @@ const notebooksML = {
   3: {
     title: "Employee Salary Prediction",
     slug: "logistic regression2",
-    thumbnail: "https://via.assets.so/img.jpg?w=300&h=200&tc=black&bg=#cecece&t=Gold Price",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
     gist: "https://gist.github.com/RitikDutta/24c4095a6b39097789c7f2e06000c389.js",
     details:
       "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
-  }
+  },  
+  4: {
+    title: "Insurence Charges",
+    slug: "linear regression 2",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/2e2b7f6ef57b40422f66f80f37350185.js",
+    details:
+      "<strong>Task:</strong> Linear Regression<br><strong>Example:</strong> linear regression on insurence cost"
+  },
 };
 
 // Business Notebooks
