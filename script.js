@@ -49,6 +49,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Logistic regression, Random Forest, XG-Boost"
   },
+  7: {
+    title: "MNIST Classification",
+    slug: "MNIST-Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/4207ddff5d66affa1951052a0c15c2b4.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD Classifier, Random Forest, KNN"
+  },
 };
 
 // LangGraph LangChain NLP Notebooks
