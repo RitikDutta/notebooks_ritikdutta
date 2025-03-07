@@ -51,16 +51,16 @@ const notebooksML = {
   },
 };
 
-// Business Notebooks
-const notebooksBusiness = {
-  // 1: {
-  //   title: "Business Analytics Notebook",
-  //   slug: "business_analytics_notebook",
-  //   thumbnail: "https://via.placeholder.com/300x200?text=Business+Analytics",
-  //   gist: "https://gist.github.com/RitikDutta/your_business_gist.js",
-  //   details:
-  //     "<strong>Task:</strong> Data Analysis<br><strong>Example:</strong> Sales trends with pandas"
-  // }
+// LangGraph LangChain NLP Notebooks
+const nlpNotebooks = {
+  1: {
+    title: "LangGraph",
+    slug: "LangGraph",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/02e7db7a7950437c40a897b5a62612b5.js",
+    details:
+      "<strong>Task:</strong> LangGraph<br><strong>Example:</strong> LangGraph, Agents, Threads, Databases"
+  }
 };
 
 // --- Helper: Create a thumbnail element ---
@@ -114,8 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Insert Business notebook thumbnails
-  Object.keys(notebooksBusiness).forEach((id) => {
-    const notebook = notebooksBusiness[id];
+  Object.keys(nlpNotebooks).forEach((id) => {
+    const notebook = nlpNotebooks[id];
     const thumb = createNotebookThumbnail(id, notebook, "business");
     gridBusiness.appendChild(thumb);
   });
@@ -132,9 +132,9 @@ function getNotebookBySlug(slug) {
       return { notebook: notebooksML[id], section: "ml", id: id };
     }
   }
-  for (let id in notebooksBusiness) {
-    if (notebooksBusiness[id].slug === slug) {
-      return { notebook: notebooksBusiness[id], section: "business", id: id };
+  for (let id in nlpNotebooks) {
+    if (nlpNotebooks[id].slug === slug) {
+      return { notebook: nlpNotebooks[id], section: "business", id: id };
     }
   }
   return null;
@@ -146,7 +146,7 @@ function openNotebook(id, section) {
   if (section === "ml") {
     notebook = notebooksML[id];
   } else if (section === "business") {
-    notebook = notebooksBusiness[id];
+    notebook = nlpNotebooks[id];
   }
 
   if (!notebook) {
