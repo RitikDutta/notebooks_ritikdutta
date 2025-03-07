@@ -65,6 +65,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD, RF, KNN, ..."
   },
+  9: {
+    title: "Support Vector Machine",
+    slug: "multi-model-Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/fd8b4d43aec5c2a439540a721b694412.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> Support vector machine Classification"
+  },
 };
 
 // LangGraph LangChain NLP Notebooks
