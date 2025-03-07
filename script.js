@@ -41,6 +41,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Linear Regression<br><strong>Example:</strong> linear regression on insurence cost"
   },
+  6: {
+    title: "Loan Approval Prediction",
+    slug: "Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/b54338c05b17c589820449c40ff7724c.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> Logistic regression, Random Forest, XG-Boost"
+  },
 };
 
 // Business Notebooks
