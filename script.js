@@ -57,6 +57,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD Classifier, Random Forest, KNN"
   },
+  8: {
+    title: "Multi Model Classification",
+    slug: "multi-model-Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/34ef9fb92e36f38cf35d8c65e51d5ecf.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD, RF, KNN, ..."
+  },
 };
 
 // LangGraph LangChain NLP Notebooks
