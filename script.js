@@ -73,6 +73,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Support vector machine Classification"
   },
+  10: {
+    title: "Bagging and pasting Voting Classifier",
+    slug: "voting-Classification",
+    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    gist: "https://gist.github.com/RitikDutta/288e099213e0c9c725002877c676e1fb.js",
+    details:
+      "<strong>Task:</strong> Classification<br><strong>Example:</strong> Voting Classifier"
+  },
 };
 
 // LangGraph LangChain NLP Notebooks
