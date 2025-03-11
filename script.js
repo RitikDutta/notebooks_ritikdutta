@@ -5,14 +5,14 @@ const notebooksML = {
     title: "EDA and Classification predictive modelling",
     slug: "regression_notebook",
     gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/eda_predictive.png",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Binary Classification And EDA"
   },
   2: {
     title: "Car Price Prediction EDA",
     slug: "logistic regression1",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/car_eda.png",
     gist: "https://gist.github.com/RitikDutta/333512e9e5dbef7ae44bb0e22528f5da.js",
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
@@ -20,7 +20,7 @@ const notebooksML = {
   3: {
     title: "Employee Salary Prediction",
     slug: "logistic regression2",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/employee_salary.png",
     gist: "https://gist.github.com/RitikDutta/24c4095a6b39097789c7f2e06000c389.js",
     details:
       "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
@@ -28,7 +28,7 @@ const notebooksML = {
   4: {
     title: "Multi Model Comparison",
     slug: "multi model",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/multi_model_comparison.png",
     gist: "https://gist.github.com/RitikDutta/888582721bcbe4c8d247829b35e3703f.js",
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> (Linear, Robust, Ridge, Lasso, ElasticNet, Polinomial, RF, SVM) Regression, SGD, ANN"
@@ -36,7 +36,7 @@ const notebooksML = {
   5: {
     title: "Insurence Charges",
     slug: "linear regression 2",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/insurance_prediction.png",
     gist: "https://gist.github.com/RitikDutta/2e2b7f6ef57b40422f66f80f37350185.js",
     details:
       "<strong>Task:</strong> Linear Regression<br><strong>Example:</strong> linear regression on insurence cost"
@@ -44,7 +44,7 @@ const notebooksML = {
   6: {
     title: "Loan Approval Prediction",
     slug: "Classification",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/loan_approval_prediction.png",
     gist: "https://gist.github.com/RitikDutta/b54338c05b17c589820449c40ff7724c.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Logistic regression, Random Forest, XG-Boost"
@@ -52,7 +52,7 @@ const notebooksML = {
   7: {
     title: "MNIST Classification",
     slug: "MNIST-Classification",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/mnist_classification.png",
     gist: "https://gist.github.com/RitikDutta/4207ddff5d66affa1951052a0c15c2b4.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD Classifier, Random Forest, KNN"
@@ -60,7 +60,7 @@ const notebooksML = {
   8: {
     title: "Multi Model Classification",
     slug: "multi-model-Classification",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/multi_model_classification.png",
     gist: "https://gist.github.com/RitikDutta/34ef9fb92e36f38cf35d8c65e51d5ecf.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD, RF, KNN, ..."
@@ -68,7 +68,7 @@ const notebooksML = {
   9: {
     title: "Support Vector Machine",
     slug: "multi-model-Classification",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/svm_classification.png",
     gist: "https://gist.github.com/RitikDutta/fd8b4d43aec5c2a439540a721b694412.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Support vector machine Classification"
@@ -76,7 +76,7 @@ const notebooksML = {
   10: {
     title: "Bagging and pasting Voting Classifier",
     slug: "voting-Classification",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/bagging_pasting_voting.png",
     gist: "https://gist.github.com/RitikDutta/288e099213e0c9c725002877c676e1fb.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Voting Classifier"
@@ -88,7 +88,7 @@ const nlpNotebooks = {
   1: {
     title: "LangGraph",
     slug: "LangGraph",
-    thumbnail: "https://www.itarian.com/images/business-report.jpg",
+    thumbnail: "media/langraph.png",
     gist: "https://gist.github.com/RitikDutta/02e7db7a7950437c40a897b5a62612b5.js",
     details:
       "<strong>Task:</strong> LangGraph<br><strong>Example:</strong> LangGraph, Agents, Threads, Databases"
