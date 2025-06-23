@@ -81,6 +81,14 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Voting Classifier"
   },
+  11: {
+    title: "Business Research Truck Delivery",
+    slug: "EDA and Actual business case study",
+    thumbnail: "media/bagging_pasting_voting.png",
+    gist: "https://gist.github.com/RitikDutta/79fff6ae19d74c2d8258403af7b282b4.js",
+    details:
+      "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong> Voting Classifier"
+  },
 };
 
 // LangGraph LangChain NLP Notebooks
