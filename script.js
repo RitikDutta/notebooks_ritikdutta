@@ -84,10 +84,10 @@ const notebooksML = {
   11: {
     title: "Business Research Truck Delivery",
     slug: "EDA and Actual business case study",
-    thumbnail: "media/bagging_pasting_voting.png",
+    thumbnail: "media/Business_Research_Truck_Delivery.png",
     gist: "https://gist.github.com/RitikDutta/79fff6ae19d74c2d8258403af7b282b4.js",
     details:
-      "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong> Voting Classifier"
+      "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong>Custom Mathematical functions, EDA, Machine Learning"
   },
 };
 
