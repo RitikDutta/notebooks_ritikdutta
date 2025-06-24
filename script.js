@@ -2,6 +2,14 @@
 // Machine Learning Notebooks
 const notebooksML = {
   1: {
+    title: "Business Research Truck Delivery",
+    slug: "EDA and Actual business case study",
+    thumbnail: "media/Business_Research_Truck_Delivery.png",
+    gist: "https://gist.github.com/RitikDutta/79fff6ae19d74c2d8258403af7b282b4.js",
+    details:
+      "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong>Custom Mathematical functions, EDA, Machine Learning"
+  },
+  2: {
     title: "EDA and Classification predictive modelling",
     slug: "regression_notebook",
     gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
@@ -9,7 +17,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Binary Classification And EDA"
   },
-  2: {
+  3: {
     title: "Car Price Prediction EDA",
     slug: "logistic regression1",
     thumbnail: "media/car_eda.png",
@@ -17,7 +25,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
   },
-  3: {
+  4: {
     title: "Employee Salary Prediction",
     slug: "logistic regression2",
     thumbnail: "media/employee_salary.png",
@@ -25,7 +33,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
   },  
-  4: {
+  5: {
     title: "Multi Model Comparison",
     slug: "multi model",
     thumbnail: "media/multi_model_comparison.png",
@@ -33,7 +41,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> (Linear, Robust, Ridge, Lasso, ElasticNet, Polinomial, RF, SVM) Regression, SGD, ANN"
   },
-  5: {
+  6: {
     title: "Insurence Charges",
     slug: "linear regression 2",
     thumbnail: "media/insurance_prediction.png",
@@ -41,7 +49,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Linear Regression<br><strong>Example:</strong> linear regression on insurence cost"
   },
-  6: {
+  7: {
     title: "Loan Approval Prediction",
     slug: "Classification",
     thumbnail: "media/loan_approval_prediction.png",
@@ -49,7 +57,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Logistic regression, Random Forest, XG-Boost"
   },
-  7: {
+  8: {
     title: "MNIST Classification",
     slug: "MNIST-Classification",
     thumbnail: "media/mnist_classification.png",
@@ -57,7 +65,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD Classifier, Random Forest, KNN"
   },
-  8: {
+  9: {
     title: "Multi Model Classification",
     slug: "multi-model-Classification",
     thumbnail: "media/multi_model_classification.png",
@@ -65,7 +73,7 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD, RF, KNN, ..."
   },
-  9: {
+  10: {
     title: "Support Vector Machine",
     slug: "multi-model-Classification",
     thumbnail: "media/svm_classification.png",
@@ -73,21 +81,13 @@ const notebooksML = {
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Support vector machine Classification"
   },
-  10: {
+  11: {
     title: "Bagging and pasting Voting Classifier",
     slug: "voting-Classification",
     thumbnail: "media/bagging_pasting_voting.png",
     gist: "https://gist.github.com/RitikDutta/288e099213e0c9c725002877c676e1fb.js",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Voting Classifier"
-  },
-  11: {
-    title: "Business Research Truck Delivery",
-    slug: "EDA and Actual business case study",
-    thumbnail: "media/Business_Research_Truck_Delivery.png",
-    gist: "https://gist.github.com/RitikDutta/79fff6ae19d74c2d8258403af7b282b4.js",
-    details:
-      "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong>Custom Mathematical functions, EDA, Machine Learning"
   },
 };
 
