@@ -110,7 +110,7 @@ const llmNotebooks = {
     slug: "llm-notebook",
     thumbnail: "media/notebook_logo.png",
     githubNotebookUrl:
-      "https://github.com/RitikDutta/notebooks_ritikdutta/blob/master/notebooks/colab_5b_class_qlora_finetuning%20(1).json",
+      "https://github.com/RitikDutta/notebooks_ritikdutta/blob/master/notebooks/colab_5b_class_qlora_finetuning_.ipynb",
     details: "finetuned 1.5B model"
   }
 };
