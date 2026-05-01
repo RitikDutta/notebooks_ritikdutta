@@ -109,7 +109,7 @@ const llmNotebooks = {
     title: "fine tuining",
     slug: "llm-notebook",
     thumbnail: "media/notebook_logo.png",
-    gist: "https://gist.github.com/RitikDutta/70353281325992dba9c83bf460316240.js",
+    gist: "https://gist.github.com/RitikDutta/772b9e319e6c0609b450c46f0cbafabd.js",
     details: "finetuned 1.5B model"
   }
 };
