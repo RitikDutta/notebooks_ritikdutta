@@ -103,6 +103,18 @@ const nlpNotebooks = {
   }
 };
 
+// LLM Notebooks
+const llmNotebooks = {
+  1: {
+    title: "LLM Notebook",
+    slug: "llm-notebook",
+    thumbnail: "media/notebook_logo.png",
+    gist: "https://gist.github.com/RitikDutta/70353281325992dba9c83bf460316240.js",
+    details:
+      "<strong>Task:</strong> LLM<br><strong>Example:</strong> Large Language Model notebook"
+  }
+};
+
 // --- Helper: Create a thumbnail element ---
 function createNotebookThumbnail(id, notebook, section) {
   const thumbnail = document.createElement("div");
@@ -145,6 +157,7 @@ function createNotebookThumbnail(id, notebook, section) {
 document.addEventListener("DOMContentLoaded", () => {
   const gridML = document.getElementById("grid-ml");
   const gridBusiness = document.getElementById("grid-business");
+  const gridLLM = document.getElementById("grid-llm");
 
   // Insert ML notebook thumbnails
   Object.keys(notebooksML).forEach((id) => {
@@ -158,6 +171,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const notebook = nlpNotebooks[id];
     const thumb = createNotebookThumbnail(id, notebook, "business");
     gridBusiness.appendChild(thumb);
+  });
+
+  // Insert LLM notebook thumbnails
+  Object.keys(llmNotebooks).forEach((id) => {
+    const notebook = llmNotebooks[id];
+    const thumb = createNotebookThumbnail(id, notebook, "llm");
+    gridLLM.appendChild(thumb);
   });
 
   // Check URL hash for a notebook slug
@@ -177,6 +197,11 @@ function getNotebookBySlug(slug) {
       return { notebook: nlpNotebooks[id], section: "business", id: id };
     }
   }
+  for (let id in llmNotebooks) {
+    if (llmNotebooks[id].slug === slug) {
+      return { notebook: llmNotebooks[id], section: "llm", id: id };
+    }
+  }
   return null;
 }
 
@@ -187,6 +212,8 @@ function openNotebook(id, section) {
     notebook = notebooksML[id];
   } else if (section === "business") {
     notebook = nlpNotebooks[id];
+  } else if (section === "llm") {
+    notebook = llmNotebooks[id];
   }
 
   if (!notebook) {
