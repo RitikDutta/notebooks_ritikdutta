@@ -106,12 +106,11 @@ const nlpNotebooks = {
 // LLM Notebooks
 const llmNotebooks = {
   1: {
-    title: "LLM Notebook",
+    title: "fine tuining",
     slug: "llm-notebook",
     thumbnail: "media/notebook_logo.png",
     gist: "https://gist.github.com/RitikDutta/70353281325992dba9c83bf460316240.js",
-    details:
-      "<strong>Task:</strong> LLM<br><strong>Example:</strong> Large Language Model notebook"
+    details: "finetuned 1.5B model"
   }
 };
 
