@@ -1,0 +1,1883 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "id": "ae4521cc",
+      "metadata": {
+        "id": "ae4521cc"
+      },
+      "source": [
+        "# Colab QLoRA Fine-Tuning Notebook — 5B-Class Model\n",
+        "\n",
+        "This notebook fine-tunes a **5B-class instruction model** using **QLoRA** on Google Colab.\n",
+        "\n",
+        "Default model:\n",
+        "\n",
+        "```python\n",
+        "Qwen/Qwen3-4B-Instruct-2507\n",
+        "```\n",
+        "\n",
+        "Why this model?\n",
+        "\n",
+        "- It is close to the requested 5B scale.\n",
+        "- It is practical for Colab with 4-bit QLoRA.\n",
+        "- It is easier to run than jumping directly to 7B/14B on limited GPU memory.\n",
+        "\n",
+        "You can switch to a heavier model later by changing `MODEL_ID`.\n",
+        "\n",
+        "> Important: this notebook is for testing the fine-tuning pipeline. For real quality improvement, use a clean dataset with at least a few hundred high-quality examples and a separate eval set.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "5f74a79d",
+      "metadata": {
+        "id": "5f74a79d"
+      },
+      "source": [
+        "## 0. Colab setup checklist\n",
+        "\n",
+        "Before running:\n",
+        "\n",
+        "1. Open **Runtime → Change runtime type**.\n",
+        "2. Select **GPU**.\n",
+        "3. Prefer **T4 / L4 / A100**.\n",
+        "4. Run cells from top to bottom.\n",
+        "5. Start with a small dataset and `MAX_SEQ_LENGTH = 512` or `1024`.\n",
+        "\n",
+        "If you get CUDA OOM, reduce:\n",
+        "\n",
+        "```python\n",
+        "MAX_SEQ_LENGTH\n",
+        "per_device_train_batch_size\n",
+        "lora_r\n",
+        "gradient_accumulation_steps\n",
+        "```\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "276be1df",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "276be1df",
+        "outputId": "80c806e6-152f-4e11-de31-908cfb2f43ea"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Fri May  1 09:03:42 2026       \n",
+            "+-----------------------------------------------------------------------------------------+\n",
+            "| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |\n",
+            "+-----------------------------------------+------------------------+----------------------+\n",
+            "| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n",
+            "| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n",
+            "|                                         |                        |               MIG M. |\n",
+            "|=========================================+========================+======================|\n",
+            "|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |\n",
+            "| N/A   37C    P8              9W /   70W |       0MiB /  15360MiB |      0%      Default |\n",
+            "|                                         |                        |                  N/A |\n",
+            "+-----------------------------------------+------------------------+----------------------+\n",
+            "\n",
+            "+-----------------------------------------------------------------------------------------+\n",
+            "| Processes:                                                                              |\n",
+            "|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n",
+            "|        ID   ID                                                               Usage      |\n",
+            "|=========================================================================================|\n",
+            "|  No running processes found                                                             |\n",
+            "+-----------------------------------------------------------------------------------------+\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Check GPU\n",
+        "!nvidia-smi"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "6c714e3a",
+      "metadata": {
+        "id": "6c714e3a"
+      },
+      "outputs": [],
+      "source": [
+        "# Install dependencies\n",
+        "# Restart runtime if Colab asks after installation.\n",
+        "\n",
+        "!pip -q install -U \\\n",
+        "  transformers \\\n",
+        "  accelerate \\\n",
+        "  peft \\\n",
+        "  bitsandbytes \\\n",
+        "  datasets \\\n",
+        "  sentencepiece \\\n",
+        "  protobuf \\\n",
+        "  huggingface_hub"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "f626f23c",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "f626f23c",
+        "outputId": "2b156e47-ee56-43a8-bd71-fa4d97c6bf72"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Torch: 2.10.0+cu128\n",
+            "CUDA available: True\n",
+            "GPU: Tesla T4\n",
+            "GPU capability: 7 5\n"
+          ]
+        }
+      ],
+      "source": [
+        "import os\n",
+        "import json\n",
+        "import torch\n",
+        "import random\n",
+        "import numpy as np\n",
+        "\n",
+        "from datasets import Dataset, load_dataset\n",
+        "from transformers import (\n",
+        "    AutoTokenizer,\n",
+        "    AutoModelForCausalLM,\n",
+        "    BitsAndBytesConfig,\n",
+        "    TrainingArguments,\n",
+        "    Trainer,\n",
+        ")\n",
+        "from peft import (\n",
+        "    LoraConfig,\n",
+        "    get_peft_model,\n",
+        "    prepare_model_for_kbit_training,\n",
+        ")\n",
+        "\n",
+        "SEED = 42\n",
+        "random.seed(SEED)\n",
+        "np.random.seed(SEED)\n",
+        "torch.manual_seed(SEED)\n",
+        "\n",
+        "print(\"Torch:\", torch.__version__)\n",
+        "print(\"CUDA available:\", torch.cuda.is_available())\n",
+        "if torch.cuda.is_available():\n",
+        "    print(\"GPU:\", torch.cuda.get_device_name(0))\n",
+        "    major, minor = torch.cuda.get_device_capability(0)\n",
+        "    print(\"GPU capability:\", major, minor)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "0731d01c",
+      "metadata": {
+        "id": "0731d01c"
+      },
+      "source": [
+        "## 1. Optional Hugging Face login\n",
+        "\n",
+        "For the default Qwen model, login is usually not required for downloading.\n",
+        "\n",
+        "Use login if:\n",
+        "\n",
+        "- your model is gated,\n",
+        "- you want to push the adapter to Hugging Face Hub,\n",
+        "- you want to download private models/datasets.\n",
+        "\n",
+        "In Colab, you can store `HF_TOKEN` in **Secrets** and enable notebook access.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "12081e69",
+      "metadata": {
+        "id": "12081e69"
+      },
+      "outputs": [],
+      "source": [
+        "# Optional login\n",
+        "# In Colab: left sidebar → key icon → add HF_TOKEN\n",
+        "\n",
+        "try:\n",
+        "    from google.colab import userdata\n",
+        "    from huggingface_hub import login\n",
+        "\n",
+        "    hf_token = userdata.get(\"HF_TOKEN\")\n",
+        "    if hf_token:\n",
+        "        login(token=hf_token)\n",
+        "        print(\"Logged in to Hugging Face.\")\n",
+        "    else:\n",
+        "        print(\"No HF_TOKEN found. Continuing without login.\")\n",
+        "except Exception as e:\n",
+        "    print(\"Skipping HF login:\", e)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "4e8f1c1b",
+      "metadata": {
+        "id": "4e8f1c1b"
+      },
+      "source": [
+        "## 2. Model configuration\n",
+        "\n",
+        "Default: `Qwen/Qwen3-4B-Instruct-2507`.\n",
+        "\n",
+        "This is a **4B model**, but it is a good practical substitute for a 5B-class Colab test.\n",
+        "\n",
+        "If you want to go heavier later:\n",
+        "\n",
+        "```python\n",
+        "MODEL_ID = \"Qwen/Qwen2.5-7B-Instruct\"\n",
+        "```\n",
+        "\n",
+        "But 7B may be slower or may OOM on a free T4 GPU.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "ffbe560a",
+      "metadata": {
+        "id": "ffbe560a"
+      },
+      "outputs": [],
+      "source": [
+        "MODEL_ID = \"Qwen/Qwen3-4B-Instruct-2507\"\n",
+        "\n",
+        "# Colab-safe defaults\n",
+        "MAX_SEQ_LENGTH = 1024\n",
+        "OUTPUT_DIR = \"/content/qwen_5b_class_qlora_output\"\n",
+        "ADAPTER_DIR = \"/content/qwen_5b_class_qlora_adapter\"\n",
+        "\n",
+        "SYSTEM_PROMPT = \"\"\"You are a ServiceNow API assistant.\n",
+        "Convert the user's request into a safe structured API action.\n",
+        "Return only valid JSON.\n",
+        "Do not execute the action.\n",
+        "Do not invent sys_id values.\n",
+        "If a sys_id is required but not provided, first create a lookup action.\"\"\"\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "f69f5e32",
+      "metadata": {
+        "id": "f69f5e32"
+      },
+      "source": [
+        "## 3. Create or load dataset\n",
+        "\n",
+        "Expected JSONL format for your own data:\n",
+        "\n",
+        "```json\n",
+        "{\"messages\":[{\"role\":\"system\",\"content\":\"...\"},{\"role\":\"user\",\"content\":\"...\"},{\"role\":\"assistant\",\"content\":\"...\"}]}\n",
+        "```\n",
+        "\n",
+        "The final assistant message is treated as the training target.  \n",
+        "The system/user messages are treated as prompt context and are masked from the loss.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "1aa47acb",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "1aa47acb",
+        "outputId": "22b08c79-354f-445d-acb7-13b48e06b05b"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset({\n",
+            "    features: ['messages'],\n",
+            "    num_rows: 12\n",
+            "})\n",
+            "[{'role': 'system', 'content': \"You are a ServiceNow API assistant.\\nConvert the user's request into a safe structured API action.\\nReturn only valid JSON.\\nDo not execute the action.\\nDo not invent sys_id values.\\nIf a sys_id is required but not provided, first create a lookup action.\"}, {'role': 'user', 'content': 'Create a high priority incident for email server down. Caller is amit@example.com. Short description should be Email server outage.'}, {'role': 'assistant', 'content': '{\\n  \"servicenow_reference\": \"ServiceNow Incident Table API\",\\n  \"action\": \"create_incident\",\\n  \"method\": \"POST\",\\n  \"endpoint\": \"/api/now/table/incident\",\\n  \"query_params\": {},\\n  \"body\": {\\n    \"caller_id\": \"amit@example.com\",\\n    \"short_description\": \"Email server outage\",\\n    \"description\": \"Email server is down.\",\\n    \"priority\": \"2\",\\n    \"urgency\": \"1\",\\n    \"impact\": \"2\"\\n  },\\n  \"requires_lookup\": false,\\n  \"safe_to_execute\": true\\n}'}]\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Demo dataset\n",
+        "# Replace this with your own JSONL for real training.\n",
+        "# This sample is intentionally small. It is only for pipeline testing.\n",
+        "\n",
+        "SAMPLE_DATA = [\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Create a high priority incident for email server down. Caller is amit@example.com. Short description should be Email server outage.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"create_incident\",\n",
+        "                \"method\": \"POST\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {},\n",
+        "                \"body\": {\n",
+        "                    \"caller_id\": \"amit@example.com\",\n",
+        "                    \"short_description\": \"Email server outage\",\n",
+        "                    \"description\": \"Email server is down.\",\n",
+        "                    \"priority\": \"2\",\n",
+        "                    \"urgency\": \"1\",\n",
+        "                    \"impact\": \"2\"\n",
+        "                },\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": True\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Assign incident INC0012345 to Network team.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"lookup_assignment_group\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/sys_user_group\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"name=Network\",\n",
+        "                    \"sysparm_fields\": \"sys_id,name\",\n",
+        "                    \"sysparm_limit\": \"1\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"update_incident_assignment_group\",\n",
+        "                    \"method\": \"PATCH\",\n",
+        "                    \"endpoint\": \"/api/now/table/incident/{incident_sys_id}\",\n",
+        "                    \"body_template\": {\n",
+        "                        \"assignment_group\": \"{group_sys_id}\"\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Close incident INC0099887 with resolution notes: restarted mail service and verified delivery.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"lookup_incident\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"number=INC0099887\",\n",
+        "                    \"sysparm_fields\": \"sys_id,number,state\",\n",
+        "                    \"sysparm_limit\": \"1\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"close_incident\",\n",
+        "                    \"method\": \"PATCH\",\n",
+        "                    \"endpoint\": \"/api/now/table/incident/{incident_sys_id}\",\n",
+        "                    \"body_template\": {\n",
+        "                        \"state\": \"7\",\n",
+        "                        \"close_notes\": \"restarted mail service and verified delivery\",\n",
+        "                        \"close_code\": \"Solved (Permanently)\"\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Find open incidents assigned to Priya.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"lookup_user\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/sys_user\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"name=Priya\",\n",
+        "                    \"sysparm_fields\": \"sys_id,name,email\",\n",
+        "                    \"sysparm_limit\": \"5\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"list_open_incidents_assigned_to_user\",\n",
+        "                    \"method\": \"GET\",\n",
+        "                    \"endpoint\": \"/api/now/table/incident\",\n",
+        "                    \"query_params_template\": {\n",
+        "                        \"sysparm_query\": \"assigned_to={user_sys_id}^active=true\",\n",
+        "                        \"sysparm_fields\": \"number,short_description,state,priority,assigned_to\",\n",
+        "                        \"sysparm_limit\": \"20\"\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Create a normal priority incident for laptop not charging. Caller is neha@example.com.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"create_incident\",\n",
+        "                \"method\": \"POST\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {},\n",
+        "                \"body\": {\n",
+        "                    \"caller_id\": \"neha@example.com\",\n",
+        "                    \"short_description\": \"Laptop not charging\",\n",
+        "                    \"description\": \"User reports that the laptop is not charging.\",\n",
+        "                    \"priority\": \"3\",\n",
+        "                    \"urgency\": \"2\",\n",
+        "                    \"impact\": \"2\"\n",
+        "                },\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": True\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Delete incident INC0011223 immediately.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"refuse_unsafe_delete\",\n",
+        "                \"method\": \"NONE\",\n",
+        "                \"endpoint\": \"NONE\",\n",
+        "                \"query_params\": {},\n",
+        "                \"body\": {\n",
+        "                    \"reason\": \"Deleting an incident is destructive and requires explicit confirmation and a validated sys_id. No delete action will be generated.\"\n",
+        "                },\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Update INC0007777 priority to critical.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"lookup_incident\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"number=INC0007777\",\n",
+        "                    \"sysparm_fields\": \"sys_id,number,priority\",\n",
+        "                    \"sysparm_limit\": \"1\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"update_incident_priority\",\n",
+        "                    \"method\": \"PATCH\",\n",
+        "                    \"endpoint\": \"/api/now/table/incident/{incident_sys_id}\",\n",
+        "                    \"body_template\": {\n",
+        "                        \"priority\": \"1\",\n",
+        "                        \"urgency\": \"1\",\n",
+        "                        \"impact\": \"1\"\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"List top 10 critical active incidents.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"list_critical_active_incidents\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"active=true^priority=1\",\n",
+        "                    \"sysparm_fields\": \"number,short_description,state,priority,assigned_to,opened_at\",\n",
+        "                    \"sysparm_limit\": \"10\",\n",
+        "                    \"sysparm_order_by\": \"opened_at\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": True\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Create a change request for database patching this Saturday from 1 AM to 3 AM.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Change Request Table API\",\n",
+        "                \"action\": \"create_change_request\",\n",
+        "                \"method\": \"POST\",\n",
+        "                \"endpoint\": \"/api/now/table/change_request\",\n",
+        "                \"query_params\": {},\n",
+        "                \"body\": {\n",
+        "                    \"short_description\": \"Database patching\",\n",
+        "                    \"description\": \"Database patching planned this Saturday from 1 AM to 3 AM.\",\n",
+        "                    \"type\": \"normal\",\n",
+        "                    \"risk\": \"3\",\n",
+        "                    \"impact\": \"3\"\n",
+        "                },\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": True,\n",
+        "                \"notes\": \"The exact date should be resolved by the calling application before execution.\"\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Get details of user rahul@example.com.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow User Table API\",\n",
+        "                \"action\": \"get_user_details\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/sys_user\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"email=rahul@example.com\",\n",
+        "                    \"sysparm_fields\": \"sys_id,name,email,user_name,department,active\",\n",
+        "                    \"sysparm_limit\": \"1\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"requires_lookup\": False,\n",
+        "                \"safe_to_execute\": True\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Create catalog request for new monitor for rohan@example.com.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Service Catalog API\",\n",
+        "                \"action\": \"lookup_catalog_item\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/sc_cat_item\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"nameLIKEmonitor^active=true\",\n",
+        "                    \"sysparm_fields\": \"sys_id,name\",\n",
+        "                    \"sysparm_limit\": \"5\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"create_catalog_request\",\n",
+        "                    \"method\": \"POST\",\n",
+        "                    \"endpoint\": \"/api/sn_sc/servicecatalog/items/{catalog_item_sys_id}/order_now\",\n",
+        "                    \"body_template\": {\n",
+        "                        \"sysparm_quantity\": \"1\",\n",
+        "                        \"variables\": {\n",
+        "                            \"requested_for\": \"rohan@example.com\"\n",
+        "                        }\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    },\n",
+        "    {\n",
+        "        \"messages\": [\n",
+        "            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "            {\"role\": \"user\", \"content\": \"Reopen INC0055555 because the issue has returned.\"},\n",
+        "            {\"role\": \"assistant\", \"content\": json.dumps({\n",
+        "                \"servicenow_reference\": \"ServiceNow Incident Table API\",\n",
+        "                \"action\": \"lookup_incident\",\n",
+        "                \"method\": \"GET\",\n",
+        "                \"endpoint\": \"/api/now/table/incident\",\n",
+        "                \"query_params\": {\n",
+        "                    \"sysparm_query\": \"number=INC0055555\",\n",
+        "                    \"sysparm_fields\": \"sys_id,number,state\",\n",
+        "                    \"sysparm_limit\": \"1\"\n",
+        "                },\n",
+        "                \"body\": {},\n",
+        "                \"next_action_after_lookup\": {\n",
+        "                    \"action\": \"reopen_incident\",\n",
+        "                    \"method\": \"PATCH\",\n",
+        "                    \"endpoint\": \"/api/now/table/incident/{incident_sys_id}\",\n",
+        "                    \"body_template\": {\n",
+        "                        \"state\": \"2\",\n",
+        "                        \"work_notes\": \"Issue has returned. Reopening incident.\"\n",
+        "                    }\n",
+        "                },\n",
+        "                \"requires_lookup\": True,\n",
+        "                \"safe_to_execute\": False\n",
+        "            }, indent=2)}\n",
+        "        ]\n",
+        "    }\n",
+        "]\n",
+        "\n",
+        "dataset = Dataset.from_list(SAMPLE_DATA)\n",
+        "print(dataset)\n",
+        "print(dataset[0][\"messages\"])\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "dbd65f6d",
+      "metadata": {
+        "id": "dbd65f6d"
+      },
+      "source": [
+        "### Optional: Upload your own JSONL dataset\n",
+        "\n",
+        "Uncomment and run this cell if you want to upload your own `train.jsonl`.\n",
+        "\n",
+        "Expected one record per line:\n",
+        "\n",
+        "```json\n",
+        "{\"messages\":[{\"role\":\"system\",\"content\":\"...\"},{\"role\":\"user\",\"content\":\"...\"},{\"role\":\"assistant\",\"content\":\"...\"}]}\n",
+        "```\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "c23c8e78",
+      "metadata": {
+        "id": "c23c8e78"
+      },
+      "outputs": [],
+      "source": [
+        "# Optional upload dataset\n",
+        "# from google.colab import files\n",
+        "# uploaded = files.upload()\n",
+        "# file_name = list(uploaded.keys())[0]\n",
+        "# dataset = load_dataset(\"json\", data_files=file_name, split=\"train\")\n",
+        "# print(dataset)\n",
+        "# print(dataset[0])\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "769a4c52",
+      "metadata": {
+        "id": "769a4c52"
+      },
+      "source": [
+        "## 4. Load tokenizer and model in 4-bit\n",
+        "\n",
+        "We use:\n",
+        "\n",
+        "- 4-bit NF4 quantization\n",
+        "- double quantization\n",
+        "- LoRA adapters\n",
+        "- gradient checkpointing\n",
+        "\n",
+        "This is QLoRA-style training.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "0c6df51e",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 548,
+          "referenced_widgets": [
+            "f5c792b809714a8091aa920648512966",
+            "daa1674fa6214c42a2a8f42c7ea5423a",
+            "9bbbbc4b5739407fa087c1234e013146",
+            "f4e2627a8b1642119557c6667d18b88e",
+            "fd4f7cd7f3874fd3a843a81bc82d94a0",
+            "2e16156d16aa4cebbfd7f85d423a6de9",
+            "f71dc23354cc48b89f175db97c26e86e",
+            "eaf57ab28fbc4b41a05cbfd682c165a2",
+            "bf7ef6a7e9f343a6983ea3b791c37353",
+            "bba5a8a2a73e4f0ab36c1172718a2862",
+            "bbb4dd1299ee4f269949e4ace4978fab",
+            "49264ba9e2c24c59b8f68b2368b9a4a5",
+            "1456062c6174451b905d9f0e566b710f",
+            "08459aa7267b4a4886befb524edfaf49",
+            "03176a8d78194888ada37a430e67ea90",
+            "4d12d006c6be4ffdbb89524e5bba334f",
+            "a7fff3c96cd64455a969f0d891c37a45",
+            "11508cdda92a431c9b5fbfbcf394b45b",
+            "28259c94b79742cea7a8aa2ec8e08368",
+            "3d1d6db71d3e4355a947af3a66a44bbe",
+            "25ba4fc06e504bf9bc7d6a1b6550e88c",
+            "3eff570b7edf47f0af6add8fbc75e629",
+            "a46dd42aaa5843ae97b6978dc6f8a80d",
+            "2b8a9e3b31e14da494542c6089137a6e",
+            "6d9dc5b2d34c4400b6763dfa890e0867",
+            "77fc77431035416db323cc7fce119bee",
+            "b89631020e684886963937e57df0e9d7",
+            "21d9738f51994cb4939f6ff8d88531bb",
+            "6858ceeb0c2c4512a9a16e70535cd55f",
+            "436fd723f5c7482688709d16ae484697",
+            "3a277e5020f74866a6ddd4a1893b731d",
+            "34d307925ea24029ab8c53ab63b72947",
+            "94c0971adb8145f4927893f5312ba343",
+            "de8934069f6c405aba60e7adb9b0ae9e",
+            "601aecd5bcee4ce18ae06818ae65ddaa",
+            "37f949e89def42cd8d3dfc793a3a6399",
+            "5089045d112f46b78ad1598b6fc73b88",
+            "15ea4b855b91435298bc966c64240cbc",
+            "c5cc3ffffdd54793a054015b9d865160",
+            "ed751f6792cf4103a63766764a3ad680",
+            "a728e3c1bd16455983f234205e9b4bab",
+            "4c7047887ebd45b087103db93bd532b4",
+            "82edd91e21914b5585140567fa06975f",
+            "b131d3d928214a20bd8220fa241d662f",
+            "2652135fb2214be986979dc9501c054d",
+            "6046f85934344048a6692b0c42ececb5",
+            "a9a80598b5354c0dbe95a1a645bbfc41",
+            "830dc494e620416691491d46c4cdce9e",
+            "4a46a04a0dbe4082bb87caf0ccef7828",
+            "db352d6d63c948328fc965fb93c1859d",
+            "b6cfb5d1acd04bb4a1caac2a574a90ef",
+            "ab5e42c212b841e18c7e7add572ab740",
+            "8afe460f1cd245f29946062a53eaa991",
+            "a355ee1006fa4bee9a40679395de0eac",
+            "069cf3cb82114a699da40f6c7975c859",
+            "c67354240d004674bd136938620855c7",
+            "58dbc1bd2941492a8b6a1cd40d80863e",
+            "c1bb1a174cd3426aaad138e3a0826cf3",
+            "816ee9859e6d4237849830b16b877be0",
+            "9d2b302ec3fd48529596b124003af007",
+            "51948dc4c0b944498ba8a718a229dce5",
+            "515fb3c5be2b42abba7070dd68b3199d",
+            "414b07a4e0cf447c95b963afb698df9e",
+            "9ff1a0fc21e54baf917244118fd370c2",
+            "e21c58e3d5ee4c55a1965f60c8060f2d",
+            "3ef321380b9245e08057c09c25687829",
+            "1bb36e54e46d41f8b6e2cff16d9b87df",
+            "a6e382e333c74b659b5017bf6b6c6a24",
+            "5a6d9fca775744ee97216fcb8bdbe655",
+            "da3e0fa3b44949c09067abb714928774",
+            "2a8c8f5d67624875a0223fba4e43347e",
+            "56c102ddee54408281b46ce2d65cf9e1",
+            "40c772080c4c441fa7b50a7391c03e7c",
+            "f8bf0a45c53a4b7d96bc0bec80da9e3c",
+            "a43738b778b5441fa9a66de99e999280",
+            "56c3861584a44346b05e768eb886fd8d",
+            "6b4a77e3f6e14583891ba3e9348edeec",
+            "b0020653e5124c9eac47fc734c1d1d8e",
+            "1f3c585d6a5149edbb204a65bd5d0aa4",
+            "c0512fd8f8fd4e25a97e5d6fd0d92f2c",
+            "2b2a2d7e895143e1af26bb882bb13e7c",
+            "34526783169247c4adea6e8de664343d",
+            "b639ae6a2b5b434f8af56b46e31b40fa",
+            "b211e75a79494c00ae4dcdce02dff0a0",
+            "b311f636a61a45b784316e401a25ea36",
+            "4d455f4f81a249f8bf48e138de24248e",
+            "d559b52f8b89414a989dc996f1d5b014",
+            "b913c00e7e084de1849e351f16fa42bc",
+            "0186b918f35948b28f7be9a88021e64e",
+            "a5da1a7e634e40179980443143f9e663",
+            "121374efd60347bca18b3813692c7c85",
+            "6c439a39643b41a188a26ef68922de27",
+            "d598057e7f214dc285b547ef1278d7f2",
+            "00f05872014c496c81cfd48b3fa019b2",
+            "3078a133f63f45c7bd5f489d4a68d806",
+            "a3fd232b4c4f4188b61e2bdb4896ff21",
+            "7847d0f411a24d8e98524a7cc22ae31d",
+            "fb7131ae789d4d3f97ce1a44b8a69194",
+            "73e49116934547fc9c4d27eeffdb445a",
+            "ef0cb06b69334e6bad66dffc92c8447c",
+            "5b6bb6287a764c46a339b78bb2c33b01",
+            "1c4e1a4acc1649a0bfdbadd4fc98fdbc",
+            "326d6503ba7941ee882d49abe7e5b99c",
+            "0c38c196844143c29100f069e1ef95ad",
+            "3158c69397c0484882df44e49381f15d",
+            "8ddb926befca4545a4afe42c2d66e796",
+            "ccf5223432424906a82da756b7dd4e07",
+            "7d22d1a7bfcf445ca35c12e2ef785875",
+            "bcfe3e7a26364575a1cbff9073a48d1c",
+            "5ec6b73dff4a4fed8456ee866e1e9f6b"
+          ]
+        },
+        "id": "0c6df51e",
+        "outputId": "75baf1c9-6a3a-4c57-9d6a-42ecc1a42894"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Compute dtype: torch.float16\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/huggingface_hub/utils/_auth.py:93: UserWarning: \n",
+            "The secret `HF_TOKEN` does not exist in your Colab secrets.\n",
+            "To authenticate with the Hugging Face Hub, create a token in your settings tab (https://huggingface.co/settings/tokens), set it as secret in your Google Colab and restart your session.\n",
+            "You will be able to reuse this secret in all of your notebooks.\n",
+            "Please note that authentication is recommended but still optional to access public models or datasets.\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "config.json:   0%|          | 0.00/727 [00:00<?, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "f5c792b809714a8091aa920648512966"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "tokenizer_config.json: 0.00B [00:00, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "49264ba9e2c24c59b8f68b2368b9a4a5"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n",
+            "WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "vocab.json: 0.00B [00:00, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "a46dd42aaa5843ae97b6978dc6f8a80d"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "merges.txt: 0.00B [00:00, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "de8934069f6c405aba60e7adb9b0ae9e"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "tokenizer.json:   0%|          | 0.00/11.4M [00:00<?, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "2652135fb2214be986979dc9501c054d"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[transformers] `torch_dtype` is deprecated! Use `dtype` instead!\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "model.safetensors.index.json: 0.00B [00:00, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "c67354240d004674bd136938620855c7"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "Downloading (incomplete total...): 0.00B [00:00, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "1bb36e54e46d41f8b6e2cff16d9b87df"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "Fetching 3 files:   0%|          | 0/3 [00:00<?, ?it/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "b0020653e5124c9eac47fc734c1d1d8e"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "0186b918f35948b28f7be9a88021e64e"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "generation_config.json:   0%|          | 0.00/238 [00:00<?, ?B/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "ef0cb06b69334e6bad66dffc92c8447c"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Model loaded.\n"
+          ]
+        }
+      ],
+      "source": [
+        "def supports_bf16():\n",
+        "    if not torch.cuda.is_available():\n",
+        "        return False\n",
+        "    major, _ = torch.cuda.get_device_capability()\n",
+        "    return major >= 8\n",
+        "\n",
+        "compute_dtype = torch.bfloat16 if supports_bf16() else torch.float16\n",
+        "print(\"Compute dtype:\", compute_dtype)\n",
+        "\n",
+        "tokenizer = AutoTokenizer.from_pretrained(\n",
+        "    MODEL_ID,\n",
+        "    trust_remote_code=True,\n",
+        "    use_fast=True,\n",
+        ")\n",
+        "\n",
+        "if tokenizer.pad_token is None:\n",
+        "    tokenizer.pad_token = tokenizer.eos_token\n",
+        "\n",
+        "tokenizer.padding_side = \"right\"\n",
+        "\n",
+        "bnb_config = BitsAndBytesConfig(\n",
+        "    load_in_4bit=True,\n",
+        "    bnb_4bit_quant_type=\"nf4\",\n",
+        "    bnb_4bit_use_double_quant=True,\n",
+        "    bnb_4bit_compute_dtype=compute_dtype,\n",
+        ")\n",
+        "\n",
+        "model = AutoModelForCausalLM.from_pretrained(\n",
+        "    MODEL_ID,\n",
+        "    quantization_config=bnb_config,\n",
+        "    device_map=\"auto\",\n",
+        "    trust_remote_code=True,\n",
+        "    torch_dtype=compute_dtype,\n",
+        ")\n",
+        "\n",
+        "model.config.use_cache = False\n",
+        "print(\"Model loaded.\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "1c56c367",
+      "metadata": {
+        "id": "1c56c367"
+      },
+      "source": [
+        "## 5. Format and tokenize dataset\n",
+        "\n",
+        "This notebook masks the loss for prompt tokens.\n",
+        "\n",
+        "That means the model is mainly trained to predict the **assistant answer**, not to memorize the user prompt.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "47e27347",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 205,
+          "referenced_widgets": [
+            "99e86d9b872d4972aab89a24896136a9",
+            "121f0503b0ba45b7bb368f8482eb83ec",
+            "e7eed04a5ab14a569751f6941999908b",
+            "d551e410a90841279667f34f9100a5df",
+            "fd0f8d4cda0e44f1985559507437b005",
+            "6fcdcbefc5644fc1a73433b63db08013",
+            "b7da86f06f314fd3b13a94862ce4bbd3",
+            "d24ee52433cf4cf89d9b6b4d20bd65f6",
+            "ba1588e1181b422e9651a8c1d97fd13c",
+            "d2ccdf17d14342318cd317fd486a000e",
+            "b8b13216ff4b4a55b34e08df8fb0f398"
+          ]
+        },
+        "id": "47e27347",
+        "outputId": "ddf1cc8e-9d37-4ea5-b09d-804e97cde20a"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "Map:   0%|          | 0/12 [00:00<?, ? examples/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "99e86d9b872d4972aab89a24896136a9"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset({\n",
+            "    features: ['input_ids', 'attention_mask', 'labels'],\n",
+            "    num_rows: 9\n",
+            "})\n",
+            "Dataset({\n",
+            "    features: ['input_ids', 'attention_mask', 'labels'],\n",
+            "    num_rows: 3\n",
+            "})\n",
+            "First tokenized length: 191\n"
+          ]
+        }
+      ],
+      "source": [
+        "def build_prompt_and_answer(messages):\n",
+        "    if len(messages) < 2:\n",
+        "        raise ValueError(\"Each example must contain at least user and assistant messages.\")\n",
+        "\n",
+        "    if messages[-1][\"role\"] != \"assistant\":\n",
+        "        raise ValueError(\"The final message must be from assistant because it is used as the target.\")\n",
+        "\n",
+        "    prompt_messages = messages[:-1]\n",
+        "    answer = messages[-1][\"content\"]\n",
+        "\n",
+        "    prompt_text = tokenizer.apply_chat_template(\n",
+        "        prompt_messages,\n",
+        "        tokenize=False,\n",
+        "        add_generation_prompt=True,\n",
+        "    )\n",
+        "\n",
+        "    # Add EOS so the model learns where to stop.\n",
+        "    answer_text = answer + tokenizer.eos_token\n",
+        "\n",
+        "    return prompt_text, answer_text\n",
+        "\n",
+        "\n",
+        "def tokenize_example(example):\n",
+        "    prompt_text, answer_text = build_prompt_and_answer(example[\"messages\"])\n",
+        "    full_text = prompt_text + answer_text\n",
+        "\n",
+        "    tokenized_full = tokenizer(\n",
+        "        full_text,\n",
+        "        truncation=True,\n",
+        "        max_length=MAX_SEQ_LENGTH,\n",
+        "        padding=False,\n",
+        "    )\n",
+        "\n",
+        "    tokenized_prompt = tokenizer(\n",
+        "        prompt_text,\n",
+        "        truncation=True,\n",
+        "        max_length=MAX_SEQ_LENGTH,\n",
+        "        padding=False,\n",
+        "    )\n",
+        "\n",
+        "    input_ids = tokenized_full[\"input_ids\"]\n",
+        "    attention_mask = tokenized_full[\"attention_mask\"]\n",
+        "\n",
+        "    prompt_len = len(tokenized_prompt[\"input_ids\"])\n",
+        "    prompt_len = min(prompt_len, len(input_ids))\n",
+        "\n",
+        "    labels = [-100] * prompt_len + input_ids[prompt_len:]\n",
+        "\n",
+        "    return {\n",
+        "        \"input_ids\": input_ids,\n",
+        "        \"attention_mask\": attention_mask,\n",
+        "        \"labels\": labels,\n",
+        "    }\n",
+        "\n",
+        "\n",
+        "tokenized_dataset = dataset.map(\n",
+        "    tokenize_example,\n",
+        "    remove_columns=dataset.column_names,\n",
+        ")\n",
+        "\n",
+        "split = tokenized_dataset.train_test_split(test_size=0.2, seed=SEED)\n",
+        "train_dataset = split[\"train\"]\n",
+        "eval_dataset = split[\"test\"]\n",
+        "\n",
+        "print(train_dataset)\n",
+        "print(eval_dataset)\n",
+        "print(\"First tokenized length:\", len(train_dataset[0][\"input_ids\"]))\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "6a250e43",
+      "metadata": {
+        "id": "6a250e43"
+      },
+      "outputs": [],
+      "source": [
+        "def data_collator(features):\n",
+        "    input_features = [\n",
+        "        {\n",
+        "            \"input_ids\": f[\"input_ids\"],\n",
+        "            \"attention_mask\": f[\"attention_mask\"],\n",
+        "        }\n",
+        "        for f in features\n",
+        "    ]\n",
+        "\n",
+        "    batch = tokenizer.pad(\n",
+        "        input_features,\n",
+        "        padding=True,\n",
+        "        return_tensors=\"pt\",\n",
+        "    )\n",
+        "\n",
+        "    max_len = batch[\"input_ids\"].shape[1]\n",
+        "    labels = []\n",
+        "\n",
+        "    for f in features:\n",
+        "        label = f[\"labels\"]\n",
+        "        pad_len = max_len - len(label)\n",
+        "        labels.append(label + [-100] * pad_len)\n",
+        "\n",
+        "    batch[\"labels\"] = torch.tensor(labels, dtype=torch.long)\n",
+        "    return batch\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "49dc2134",
+      "metadata": {
+        "id": "49dc2134"
+      },
+      "source": [
+        "## 6. Add LoRA adapter\n",
+        "\n",
+        "For Qwen-style transformer models, these target modules are commonly used:\n",
+        "\n",
+        "```python\n",
+        "q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj\n",
+        "```\n",
+        "\n",
+        "Start with `r=16` or `r=32`.  \n",
+        "Increase only after your pipeline works.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "e0b6b119",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "e0b6b119",
+        "outputId": "c68867f2-f9ea-4c51-baf2-72e4460bd394"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "trainable params: 33,030,144 || all params: 4,055,498,240 || trainable%: 0.8145\n"
+          ]
+        }
+      ],
+      "source": [
+        "model = prepare_model_for_kbit_training(model)\n",
+        "\n",
+        "lora_config = LoraConfig(\n",
+        "    r=16,\n",
+        "    lora_alpha=32,\n",
+        "    lora_dropout=0.05,\n",
+        "    bias=\"none\",\n",
+        "    task_type=\"CAUSAL_LM\",\n",
+        "    target_modules=[\n",
+        "        \"q_proj\",\n",
+        "        \"k_proj\",\n",
+        "        \"v_proj\",\n",
+        "        \"o_proj\",\n",
+        "        \"gate_proj\",\n",
+        "        \"up_proj\",\n",
+        "        \"down_proj\",\n",
+        "    ],\n",
+        ")\n",
+        "\n",
+        "model = get_peft_model(model, lora_config)\n",
+        "model.print_trainable_parameters()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "2e20840a",
+      "metadata": {
+        "id": "2e20840a"
+      },
+      "source": [
+        "## 7. Test before fine-tuning\n",
+        "\n",
+        "This gives you a baseline response before training.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "7833e36d",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "7833e36d",
+        "outputId": "c94a3765-53dd-4abb-86a0-7799b9e46d67"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "{\n",
+            "  \"action\": \"create_incident\",\n",
+            "  \"priority\": \"1\",\n",
+            "  \"short_description\": \"VPN not working\",\n",
+            "  \"caller\": \"raj@example.com\",\n",
+            "  \"incident_type\": \"Technical Issue\",\n",
+            "  \"category\": \"Network\",\n",
+            "  \"subcategory\": \"VPN\"\n",
+            "}<|im_end|>\n"
+          ]
+        }
+      ],
+      "source": [
+        "def generate_response(user_prompt, max_new_tokens=300):\n",
+        "    messages = [\n",
+        "        {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n",
+        "        {\"role\": \"user\", \"content\": user_prompt},\n",
+        "    ]\n",
+        "\n",
+        "    text = tokenizer.apply_chat_template(\n",
+        "        messages,\n",
+        "        tokenize=False,\n",
+        "        add_generation_prompt=True,\n",
+        "    )\n",
+        "\n",
+        "    inputs = tokenizer(text, return_tensors=\"pt\").to(model.device)\n",
+        "\n",
+        "    model.eval()\n",
+        "    with torch.no_grad():\n",
+        "        outputs = model.generate(\n",
+        "            **inputs,\n",
+        "            max_new_tokens=max_new_tokens,\n",
+        "            do_sample=False,\n",
+        "            temperature=None,\n",
+        "            top_p=None,\n",
+        "            pad_token_id=tokenizer.pad_token_id,\n",
+        "            eos_token_id=tokenizer.eos_token_id,\n",
+        "        )\n",
+        "\n",
+        "    decoded = tokenizer.decode(outputs[0], skip_special_tokens=False)\n",
+        "    answer = decoded[len(text):]\n",
+        "    return answer.strip()\n",
+        "\n",
+        "\n",
+        "test_prompt = \"Create a high priority incident for VPN not working. Caller is raj@example.com.\"\n",
+        "print(generate_response(test_prompt))\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "1b184d7d",
+      "metadata": {
+        "id": "1b184d7d"
+      },
+      "source": [
+        "## 8. Train\n",
+        "\n",
+        "For a real run, increase dataset size first.  \n",
+        "Do not blindly increase epochs on tiny data; it will overfit.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "9d900059",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 214
+        },
+        "id": "9d900059",
+        "outputId": "8f0b50e4-b552-43c7-df53-2b781ed8a871"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ],
+            "text/html": [
+              "\n",
+              "    <div>\n",
+              "      \n",
+              "      <progress value='2' max='2' style='width:300px; height:20px; vertical-align: middle;'></progress>\n",
+              "      [2/2 00:03, Epoch 1/1]\n",
+              "    </div>\n",
+              "    <table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              " <tr style=\"text-align: left;\">\n",
+              "      <th>Epoch</th>\n",
+              "      <th>Training Loss</th>\n",
+              "      <th>Validation Loss</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <td>1</td>\n",
+              "      <td>1.413280</td>\n",
+              "      <td>0.950285</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table><p>"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "TrainOutput(global_step=2, training_loss=1.642558991909027, metrics={'train_runtime': 13.9307, 'train_samples_per_second': 0.646, 'train_steps_per_second': 0.144, 'total_flos': 47562383861760.0, 'train_loss': 1.642558991909027, 'epoch': 1.0})"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 12
+        }
+      ],
+      "source": [
+        "training_args = TrainingArguments(\n",
+        "    output_dir=OUTPUT_DIR,\n",
+        "    per_device_train_batch_size=1,\n",
+        "    per_device_eval_batch_size=1,\n",
+        "    gradient_accumulation_steps=8,\n",
+        "    num_train_epochs=1,\n",
+        "    learning_rate=2e-4,\n",
+        "    warmup_ratio=0.03,\n",
+        "    logging_steps=1,\n",
+        "    save_strategy=\"epoch\",\n",
+        "    eval_strategy=\"epoch\",\n",
+        "    bf16=supports_bf16(),\n",
+        "    fp16=not supports_bf16(),\n",
+        "    optim=\"paged_adamw_8bit\",\n",
+        "    gradient_checkpointing=True,\n",
+        "    max_grad_norm=0.3,\n",
+        "    report_to=\"none\",\n",
+        "    remove_unused_columns=False,\n",
+        ")\n",
+        "\n",
+        "trainer = Trainer(\n",
+        "    model=model,\n",
+        "    args=training_args,\n",
+        "    train_dataset=train_dataset,\n",
+        "    eval_dataset=eval_dataset,\n",
+        "    data_collator=data_collator,\n",
+        ")\n",
+        "\n",
+        "trainer.train()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "a5557541",
+      "metadata": {
+        "id": "a5557541"
+      },
+      "source": [
+        "## 9. Test after fine-tuning\n",
+        "\n",
+        "Compare this with the earlier output.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "8ec364c9",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "8ec364c9",
+        "outputId": "f18abbb0-a3ad-42a4-a2c5-59a19b3241e5"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "{\n",
+            "  \"apiVersion\": \"v1\",\n",
+            "  \"action\": \"create_incident\",\n",
+            "  \"parameters\": {\n",
+            "    \"short_description\": \"VPN not working\",\n",
+            "    \"priority\": \"1\",\n",
+            "    \"caller\": \"raj@example.com\",\n",
+            "    \"u_cause\": \"VPN connectivity issue\",\n",
+            "    \"u_impact\": \"User unable to access network via VPN\"\n",
+            "  },\n",
+            "  \"required_fields\": [\n",
+            "    \"short_description\",\n",
+            "    \"priority\",\n",
+            "    \"caller\"\n",
+            "  ],\n",
+            "  \"validation\": {\n",
+            "    \"caller\": {\n",
+            "      \"type\": \"email\",\n",
+            "      \"required\": true\n",
+            "    },\n",
+            "    \"priority\": {\n",
+            "      \"type\": \"enum\",\n",
+            "      \"enum_values\": [\n",
+            "        \"1\",\n",
+            "        \"2\",\n",
+            "        \"3\",\n",
+            "        \"4\",\n",
+            "        \"5\"\n",
+            "      ],\n",
+            "      \"required\": true\n",
+            "    }\n",
+            "  }\n",
+            "}<|im_end|>\n",
+            "\n",
+            "USER: List top 10 critical active incidents.\n",
+            "ASSISTANT:\n",
+            "{\n",
+            "  \"action\": \"query\",\n",
+            "  \"query\": \"SELECT sys_id, short_description, priority, state, created_date FROM incident WHERE state = 'Active' AND priority IN ('Critical', 'High') ORDER BY created_date DESC LIMIT 10\",\n",
+            "  \"table\": \"incident\",\n",
+            "  \"fields\": [\n",
+            "    \"sys_id\",\n",
+            "    \"short_description\",\n",
+            "    \"priority\",\n",
+            "    \"state\",\n",
+            "    \"created_date\"\n",
+            "  ],\n",
+            "  \"conditions\": [\n",
+            "    {\n",
+            "      \"field\": \"state\",\n",
+            "      \"operator\": \"=\",\n",
+            "      \"value\": \"Active\"\n",
+            "    },\n",
+            "    {\n",
+            "      \"field\": \"priority\",\n",
+            "      \"operator\": \"IN\",\n",
+            "      \"value\": [\n",
+            "        \"Critical\",\n",
+            "        \"High\"\n",
+            "      ]\n",
+            "    }\n",
+            "  ],\n",
+            "  \"order_by\": [\n",
+            "    {\n",
+            "      \"field\": \"created_date\",\n",
+            "      \"direction\": \"DESC\"\n",
+            "    }\n",
+            "  ],\n",
+            "  \"limit\": 10\n",
+            "}<|im_end|>\n",
+            "--------------------------------------------------------------------------------\n",
+            "\n",
+            "USER: Update INC0001111 priority to critical.\n",
+            "ASSISTANT:\n",
+            "{\n",
+            "  \"apiVersion\": \"v1\",\n",
+            "  \"action\": \"update\",\n",
+            "  \"table\": \"incident\",\n",
+            "  \"sys_parameter\": {\n",
+            "    \"sysparm_query\": \"number=INC0001111\",\n",
+            "    \"sysparm_fields\": \"priority\",\n",
+            "    \"sysparm_update\": \"priority=critical\"\n",
+            "  },\n",
+            "  \"type\": \"lookup\"\n",
+            "}<|im_end|>\n",
+            "--------------------------------------------------------------------------------\n",
+            "\n",
+            "USER: Delete incident INC0004444 now.\n",
+            "ASSISTANT:\n",
+            "{\n",
+            "  \"apiVersion\": \"v1\",\n",
+            "  \"action\": \"delete\",\n",
+            "  \"table\": \"incident\",\n",
+            "  \"sysparm_query\": \"number=INC0004444\",\n",
+            "  \"sysparm_filter\": \"number=INC0004444\",\n",
+            "  \"sysparm_limit\": \"1\"\n",
+            "}<|im_end|>\n",
+            "--------------------------------------------------------------------------------\n",
+            "\n",
+            "USER: Create catalog request for laptop for maya@example.com.\n",
+            "ASSISTANT:\n",
+            "{\n",
+            "  \"action\": \"create\",\n",
+            "  \"table\": \"u_catalo\",\n",
+            "  \"fields\": {\n",
+            "    \"name\": \"Laptop Request for Maya\",\n",
+            "    \"requestor\": \"maya@example.com\",\n",
+            "    \"item\": \"Laptop\",\n",
+            "    \"status\": \"Requested\"\n",
+            "  },\n",
+            "  \"lookup\": {\n",
+            "    \"table\": \"u_catalo\",\n",
+            "    \"field\": \"item\",\n",
+            "    \"value\": \"Laptop\",\n",
+            "    \"action\": \"lookup\"\n",
+            "  }\n",
+            "}<|im_end|>\n",
+            "--------------------------------------------------------------------------------\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(generate_response(test_prompt))\n",
+        "\n",
+        "extra_tests = [\n",
+        "    \"List top 10 critical active incidents.\",\n",
+        "    \"Update INC0001111 priority to critical.\",\n",
+        "    \"Delete incident INC0004444 now.\",\n",
+        "    \"Create catalog request for laptop for maya@example.com.\",\n",
+        "]\n",
+        "\n",
+        "for prompt in extra_tests:\n",
+        "    print(\"\\nUSER:\", prompt)\n",
+        "    print(\"ASSISTANT:\")\n",
+        "    print(generate_response(prompt))\n",
+        "    print(\"-\" * 80)\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "530e1ced",
+      "metadata": {
+        "id": "530e1ced"
+      },
+      "source": [
+        "## 10. Save adapter\n",
+        "\n",
+        "This saves only the LoRA adapter, not the full base model.\n",
+        "\n",
+        "That is what you usually want.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "71efede1",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "71efede1",
+        "outputId": "e9796781-b5a9-4021-fa1b-507505604618"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Saved adapter to: /content/qwen_5b_class_qlora_adapter\n",
+            "137M\t/content/qwen_5b_class_qlora_adapter\n"
+          ]
+        }
+      ],
+      "source": [
+        "trainer.model.save_pretrained(ADAPTER_DIR)\n",
+        "tokenizer.save_pretrained(ADAPTER_DIR)\n",
+        "\n",
+        "print(\"Saved adapter to:\", ADAPTER_DIR)\n",
+        "\n",
+        "!du -sh /content/qwen_5b_class_qlora_adapter\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "39fd53ce",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 176
+        },
+        "id": "39fd53ce",
+        "outputId": "5a01e58c-4b2e-4f54-fd77-b5013772d991"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "  adding: content/qwen_5b_class_qlora_adapter/ (stored 0%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/chat_template.jinja (deflated 73%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/adapter_config.json (deflated 59%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/adapter_model.safetensors (deflated 25%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/tokenizer.json (deflated 81%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/tokenizer_config.json (deflated 60%)\n",
+            "  adding: content/qwen_5b_class_qlora_adapter/README.md (deflated 65%)\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "\n",
+              "    async function download(id, filename, size) {\n",
+              "      if (!google.colab.kernel.accessAllowed) {\n",
+              "        return;\n",
+              "      }\n",
+              "      const div = document.createElement('div');\n",
+              "      const label = document.createElement('label');\n",
+              "      label.textContent = `Downloading \"${filename}\": `;\n",
+              "      div.appendChild(label);\n",
+              "      const progress = document.createElement('progress');\n",
+              "      progress.max = size;\n",
+              "      div.appendChild(progress);\n",
+              "      document.body.appendChild(div);\n",
+              "\n",
+              "      const buffers = [];\n",
+              "      let downloaded = 0;\n",
+              "\n",
+              "      const channel = await google.colab.kernel.comms.open(id);\n",
+              "      // Send a message to notify the kernel that we're ready.\n",
+              "      channel.send({})\n",
+              "\n",
+              "      for await (const message of channel.messages) {\n",
+              "        // Send a message to notify the kernel that we're ready.\n",
+              "        channel.send({})\n",
+              "        if (message.buffers) {\n",
+              "          for (const buffer of message.buffers) {\n",
+              "            buffers.push(buffer);\n",
+              "            downloaded += buffer.byteLength;\n",
+              "            progress.value = downloaded;\n",
+              "          }\n",
+              "        }\n",
+              "      }\n",
+              "      const blob = new Blob(buffers, {type: 'application/binary'});\n",
+              "      const a = document.createElement('a');\n",
+              "      a.href = window.URL.createObjectURL(blob);\n",
+              "      a.download = filename;\n",
+              "      div.appendChild(a);\n",
+              "      a.click();\n",
+              "      div.remove();\n",
+              "    }\n",
+              "  "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "download(\"download_223f2271-c3c7-4b54-bbb8-b294a3f579d6\", \"qwen_5b_class_qlora_adapter.zip\", 100854320)"
+            ]
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "# Zip and download adapter\n",
+        "!zip -r /content/qwen_5b_class_qlora_adapter.zip /content/qwen_5b_class_qlora_adapter\n",
+        "\n",
+        "try:\n",
+        "    from google.colab import files\n",
+        "    files.download(\"/content/qwen_5b_class_qlora_adapter.zip\")\n",
+        "except Exception as e:\n",
+        "    print(\"Download skipped:\", e)\n",
+        "    print(\"Adapter zip path: /content/qwen_5b_class_qlora_adapter.zip\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "2d5cb18e",
+      "metadata": {
+        "id": "2d5cb18e"
+      },
+      "source": [
+        "## 11. Load adapter later\n",
+        "\n",
+        "Use this when you want to reload your fine-tuned adapter for inference.\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "id": "35ef0933",
+      "metadata": {
+        "id": "35ef0933"
+      },
+      "outputs": [],
+      "source": [
+        "# Reload adapter later\n",
+        "\n",
+        "# from peft import PeftModel\n",
+        "\n",
+        "# base_model = AutoModelForCausalLM.from_pretrained(\n",
+        "#     MODEL_ID,\n",
+        "#     quantization_config=bnb_config,\n",
+        "#     device_map=\"auto\",\n",
+        "#     trust_remote_code=True,\n",
+        "#     torch_dtype=compute_dtype,\n",
+        "# )\n",
+        "\n",
+        "# fine_tuned_model = PeftModel.from_pretrained(base_model, ADAPTER_DIR)\n",
+        "# fine_tuned_model.eval()\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "id": "db6a5526",
+      "metadata": {
+        "id": "db6a5526"
+      },
+      "source": [
+        "## 12. Practical tuning knobs\n",
+        "\n",
+        "If output is poor:\n",
+        "\n",
+        "### Data problems\n",
+        "\n",
+        "- Add more examples.\n",
+        "- Use consistent JSON keys.\n",
+        "- Include negative/refusal examples.\n",
+        "- Add lookup-required examples.\n",
+        "- Add edge cases.\n",
+        "\n",
+        "### Training problems\n",
+        "\n",
+        "Try:\n",
+        "\n",
+        "```python\n",
+        "num_train_epochs = 2\n",
+        "learning_rate = 1e-4\n",
+        "lora_r = 32\n",
+        "MAX_SEQ_LENGTH = 1024\n",
+        "```\n",
+        "\n",
+        "### OOM problems\n",
+        "\n",
+        "Try:\n",
+        "\n",
+        "```python\n",
+        "MAX_SEQ_LENGTH = 512\n",
+        "lora_r = 8\n",
+        "gradient_accumulation_steps = 4\n",
+        "```\n",
+        "\n",
+        "### Production suggestion\n",
+        "\n",
+        "Do not rely only on fine-tuning for ServiceNow knowledge.\n",
+        "\n",
+        "Use:\n",
+        "\n",
+        "```text\n",
+        "Fine-tuned model = structured API planner\n",
+        "ServiceNow API/tools = real execution\n",
+        "Lookup layer = fetch sys_id safely\n",
+        "Validator = checks generated JSON schema\n",
+        "```\n"
+      ]
+    }
+  ],
+  "metadata": {
+    "accelerator": "GPU",
+    "colab": {
+      "gpuType": "T4",
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
