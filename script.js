@@ -109,7 +109,8 @@ const llmNotebooks = {
     title: "fine tuining",
     slug: "llm-notebook",
     thumbnail: "media/notebook_logo.png",
-    gist: "https://gist.github.com/RitikDutta/772b9e319e6c0609b450c46f0cbafabd.js",
+    githubNotebookUrl:
+      "https://github.com/RitikDutta/notebooks_ritikdutta/blob/master/notebooks/colab_5b_class_qlora_finetuning%20(1).json",
     details: "finetuned 1.5B model"
   }
 };
@@ -204,7 +205,7 @@ function getNotebookBySlug(slug) {
   return null;
 }
 
-// --- Open a notebook in the viewer (embed the gist inside an iframe) ---
+// --- Open a notebook in the viewer ---
 function openNotebook(id, section) {
   let notebook;
   if (section === "ml") {
@@ -246,14 +247,309 @@ function openNotebook(id, section) {
   // Append the iframe to the viewer content
   viewerContent.appendChild(iframe);
 
-  // Embed the gist inside the iframe if available
-  if (notebook.gist) {
+  // Render the notebook source inside the iframe if available.
+  if (notebook.githubNotebookUrl) {
+    renderGithubNotebookInIframe(iframe, notebook.githubNotebookUrl);
+  } else if (notebook.gist) {
     embedGistInIframe(iframe, notebook.gist);
   } else if (notebook.iframeSrc) {
     iframe.src = notebook.iframeSrc;
   }
 
   viewerContainer.classList.add("active");
+}
+
+// --- Function to render a GitHub-hosted notebook JSON inside an iframe ---
+async function renderGithubNotebookInIframe(iframe, githubUrl) {
+  const rawUrl = getRawGithubNotebookUrl(githubUrl);
+  writeNotebookMessage(
+    iframe,
+    "Loading notebook...",
+    "Fetching notebook JSON from GitHub.",
+    githubUrl
+  );
+
+  try {
+    const response = await fetch(rawUrl);
+    if (!response.ok) {
+      throw new Error(`GitHub returned ${response.status}`);
+    }
+
+    const notebook = await response.json();
+    writeNotebookHtml(iframe, notebook, githubUrl);
+  } catch (error) {
+    writeNotebookMessage(
+      iframe,
+      "Unable to load notebook",
+      `${error.message}. Open the GitHub notebook link directly or check that the file path exists.`,
+      githubUrl
+    );
+  }
+}
+
+function getRawGithubNotebookUrl(githubUrl) {
+  const url = new URL(githubUrl);
+  if (url.hostname !== "github.com") {
+    return githubUrl;
+  }
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  const blobIndex = parts.indexOf("blob");
+  if (parts.length < 5 || blobIndex < 2) {
+    return githubUrl;
+  }
+
+  const owner = parts[0];
+  const repo = parts[1];
+  const branch = parts[blobIndex + 1];
+  const filePath = parts.slice(blobIndex + 2).join("/");
+
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`;
+}
+
+function writeNotebookHtml(iframe, notebook, sourceUrl) {
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  const title = notebook.metadata?.kernelspec?.display_name || "GitHub Notebook";
+  const cells = Array.isArray(notebook.cells)
+    ? notebook.cells.map(renderNotebookCell).join("")
+    : `<pre class="notebook-json">${escapeHtml(JSON.stringify(notebook, null, 2))}</pre>`;
+
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <base target="_blank">
+        <style>
+          body {
+            margin: 0;
+            padding: 28px;
+            background: #f6f8fa;
+            color: #24292f;
+            font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+          .notebook-shell {
+            max-width: 980px;
+            margin: 0 auto;
+          }
+          .notebook-header {
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #d8dee4;
+          }
+          .notebook-header h1 {
+            margin: 0 0 8px;
+            font-size: 1.35rem;
+          }
+          .notebook-header a {
+            color: #0969da;
+            text-decoration: none;
+          }
+          .notebook-cell {
+            margin: 16px 0;
+            padding: 16px;
+            background: #fff;
+            border: 1px solid #d8dee4;
+            border-radius: 8px;
+          }
+          .notebook-cell.markdown {
+            padding: 18px 22px;
+          }
+          .notebook-cell.code {
+            border-left: 4px solid #ff9900;
+          }
+          pre {
+            margin: 0;
+            padding: 14px;
+            overflow-x: auto;
+            background: #f6f8fa;
+            border-radius: 6px;
+            font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+            white-space: pre-wrap;
+          }
+          .output {
+            margin-top: 12px;
+            border-top: 1px solid #d8dee4;
+            padding-top: 12px;
+          }
+          .output img {
+            max-width: 100%;
+            height: auto;
+          }
+          p, ul, ol {
+            margin: 0 0 12px;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            margin: 18px 0 10px;
+            line-height: 1.25;
+          }
+          .notebook-json {
+            background: #fff;
+            border: 1px solid #d8dee4;
+          }
+        </style>
+      </head>
+      <body>
+        <main class="notebook-shell">
+          <header class="notebook-header">
+            <h1>${escapeHtml(title)}</h1>
+            <a href="${escapeHtml(sourceUrl)}" rel="noopener noreferrer">Open source on GitHub</a>
+          </header>
+          ${cells}
+        </main>
+      </body>
+    </html>
+  `);
+  doc.close();
+}
+
+function renderNotebookCell(cell) {
+  const source = notebookSourceToString(cell.source);
+  if (cell.cell_type === "markdown") {
+    return `<section class="notebook-cell markdown">${renderMarkdown(source)}</section>`;
+  }
+
+  if (cell.cell_type === "code") {
+    const outputs = Array.isArray(cell.outputs) ? cell.outputs.map(renderNotebookOutput).join("") : "";
+    return `
+      <section class="notebook-cell code">
+        <pre><code>${escapeHtml(source)}</code></pre>
+        ${outputs ? `<div class="output">${outputs}</div>` : ""}
+      </section>
+    `;
+  }
+
+  return `<section class="notebook-cell"><pre>${escapeHtml(source)}</pre></section>`;
+}
+
+function renderNotebookOutput(output) {
+  if (output.output_type === "stream") {
+    return `<pre>${escapeHtml(notebookSourceToString(output.text))}</pre>`;
+  }
+
+  const data = output.data || {};
+  if (data["image/png"]) {
+    const imageData = Array.isArray(data["image/png"]) ? data["image/png"].join("") : data["image/png"];
+    return `<img src="data:image/png;base64,${imageData}" alt="Notebook output">`;
+  }
+
+  if (data["text/plain"]) {
+    return `<pre>${escapeHtml(notebookSourceToString(data["text/plain"]))}</pre>`;
+  }
+
+  if (output.traceback) {
+    return `<pre>${escapeHtml(notebookSourceToString(output.traceback))}</pre>`;
+  }
+
+  return "";
+}
+
+function renderMarkdown(source) {
+  return source
+    .split(/\n{2,}/)
+    .map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) {
+        return "";
+      }
+
+      const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+      if (heading) {
+        const level = heading[1].length;
+        return `<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`;
+      }
+
+      if (/^[-*]\s+/m.test(trimmed)) {
+        const items = trimmed
+          .split("\n")
+          .map((line) => line.replace(/^[-*]\s+/, "").trim())
+          .filter(Boolean)
+          .map((line) => `<li>${renderInlineMarkdown(line)}</li>`)
+          .join("");
+        return `<ul>${items}</ul>`;
+      }
+
+      return `<p>${renderInlineMarkdown(trimmed).replace(/\n/g, "<br>")}</p>`;
+    })
+    .join("");
+}
+
+function renderInlineMarkdown(text) {
+  return escapeHtml(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" rel="noopener noreferrer">$1</a>');
+}
+
+function notebookSourceToString(source) {
+  if (Array.isArray(source)) {
+    return source.join("");
+  }
+
+  return source || "";
+}
+
+function writeNotebookMessage(iframe, title, message, sourceUrl) {
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <base target="_blank">
+        <style>
+          body {
+            margin: 0;
+            display: grid;
+            min-height: 100vh;
+            place-items: center;
+            background: #f6f8fa;
+            color: #24292f;
+            font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+          .message {
+            width: min(520px, calc(100% - 40px));
+            padding: 24px;
+            background: #fff;
+            border: 1px solid #d8dee4;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(27, 31, 36, 0.12);
+          }
+          h1 {
+            margin: 0 0 10px;
+            font-size: 1.2rem;
+          }
+          p {
+            margin: 0 0 16px;
+          }
+          a {
+            color: #0969da;
+            text-decoration: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="message">
+          <h1>${escapeHtml(title)}</h1>
+          <p>${escapeHtml(message)}</p>
+          <a href="${escapeHtml(sourceUrl)}" rel="noopener noreferrer">Open on GitHub</a>
+        </div>
+      </body>
+    </html>
+  `);
+  doc.close();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // --- Function to embed a GitHub Gist inside an iframe ---
