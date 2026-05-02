@@ -311,12 +311,6 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   const notebookCells = Array.isArray(notebook.cells) ? notebook.cells : [];
   const title = getNotebookDisplayName(sourceUrl);
-  const kernel =
-    notebook.metadata?.kernelspec?.display_name ||
-    notebook.metadata?.language_info?.name ||
-    "Notebook";
-  const codeCellCount = notebookCells.filter((cell) => cell.cell_type === "code").length;
-  const markdownCellCount = notebookCells.filter((cell) => cell.cell_type === "markdown").length;
   const cells = notebookCells.length
     ? notebookCells.map(renderNotebookCell).join("")
     : `<pre class="notebook-json">${escapeHtml(JSON.stringify(notebook, null, 2))}</pre>`;
@@ -327,6 +321,7 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
     <html>
       <head>
         <meta charset="UTF-8">
+        <title>${escapeHtml(title)}</title>
         <base target="_blank">
         <style>
           :root {
@@ -340,12 +335,12 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
             --line: #d8dee8;
             --paper: #ffffff;
             --canvas: #eef2f7;
-            --code-bg: #f8fafc;
+            --code-bg: #f3f4f6;
             --code-ink: #1f2937;
-            --output-bg: #111827;
-            --output-panel: #0f172a;
-            --output-line: #334155;
-            --output-ink: #e5e7eb;
+            --output-bg: #ffffff;
+            --output-panel: #ffffff;
+            --output-line: #e5e7eb;
+            --output-ink: #1f2937;
           }
           * {
             box-sizing: border-box;
@@ -386,39 +381,12 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           .notebook-heading {
             min-width: 0;
           }
-          .eyebrow {
-            margin: 0 0 4px;
-            color: var(--accent);
-            font-size: 0.74rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-          }
           .notebook-heading h1 {
             margin: 0;
             color: var(--ink);
             font-size: clamp(1.15rem, 2vw, 1.55rem);
             line-height: 1.2;
             letter-spacing: 0;
-          }
-          .meta-row {
-            margin-top: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-          }
-          .meta-pill {
-            display: inline-flex;
-            align-items: center;
-            min-height: 28px;
-            padding: 4px 10px;
-            border: 1px solid #e5e7eb;
-            border-radius: 999px;
-            background: #f9fafb;
-            color: #4b5563;
-            font-size: 0.78rem;
-            font-weight: 600;
-            white-space: nowrap;
           }
           .github-link {
             flex: 0 0 auto;
@@ -450,37 +418,21 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           .cell-card {
             min-width: 0;
             overflow: hidden;
-            background: var(--paper);
+            background: transparent;
             border: 1px solid var(--line);
             border-radius: 8px;
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
           }
           .markdown-cell .cell-card {
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
             padding: 20px 24px;
           }
           .code-cell .cell-card {
-            border-top: 3px solid var(--accent);
-          }
-          .cell-toolbar {
-            min-height: 36px;
-            padding: 8px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--line);
-            color: var(--muted);
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-          }
-          .cell-kind {
-            color: var(--green);
-          }
-          .exec-count {
-            font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
-            text-transform: none;
+            background: var(--code-bg);
+            border-color: #d1d5db;
+            box-shadow: none;
           }
           pre {
             margin: 0;
@@ -489,7 +441,7 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
             letter-spacing: 0;
           }
           .code-block {
-            padding: 18px 20px;
+            padding: 14px 16px;
             background: var(--code-bg);
             color: var(--code-ink);
             white-space: pre;
@@ -515,20 +467,18 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           }
           .output-stack {
             background: var(--output-bg);
-            border-top: 1px solid var(--line);
+            margin: -8px 0 18px;
           }
           .notebook-output {
             display: grid;
             grid-template-columns: 76px minmax(0, 1fr);
             gap: 12px;
-            padding: 14px;
-            border-top: 1px solid #263244;
-          }
-          .notebook-output:first-child {
-            border-top: 0;
+            padding: 0 0 10px;
+            border: 0;
+            background: var(--output-bg);
           }
           .output-label {
-            color: #cbd5e1;
+            color: #7c8798;
             font: 600 0.75rem/1.2 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
             text-align: right;
           }
@@ -536,9 +486,9 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
             min-width: 0;
           }
           .output-body pre {
-            padding: 14px 16px;
-            border: 1px solid var(--output-line);
-            border-radius: 8px;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
             background: var(--output-panel);
             color: var(--output-ink);
             white-space: pre-wrap;
@@ -552,16 +502,17 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
             white-space: pre-wrap;
           }
           .output-error .output-body pre {
-            border-color: #f87171;
-            background: #2f1218;
-            color: #fecaca;
+            padding: 10px 12px;
+            border-left: 4px solid #ef4444;
+            background: #fff1f2;
+            color: #991b1b;
           }
           .media-output {
             display: inline-block;
             max-width: 100%;
-            padding: 10px;
-            border: 1px solid var(--output-line);
-            border-radius: 8px;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
             background: var(--output-panel);
           }
           .media-output img {
@@ -571,9 +522,9 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           }
           .html-output {
             overflow-x: auto;
-            padding: 12px;
-            border: 1px solid var(--output-line);
-            border-radius: 8px;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
             background: var(--output-panel);
             color: var(--output-ink);
           }
@@ -586,13 +537,13 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           .html-output th,
           .html-output td {
             padding: 9px 10px;
-            border: 1px solid #334155;
+            border: 1px solid #e5e7eb;
             text-align: left;
             vertical-align: top;
           }
           .html-output th {
-            background: #1f2937;
-            color: #f8fafc;
+            background: #f8fafc;
+            color: #374151;
             font-weight: 700;
           }
           .markdown-cell th,
@@ -637,22 +588,22 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
           }
           .html-output a,
           .output-body .markdown-cell a {
-            color: #93c5fd;
+            color: var(--blue);
           }
           .output-body .markdown-cell {
             color: var(--output-ink);
           }
           .output-body .markdown-cell code {
-            background: #1f2937;
-            color: #fda4af;
+            background: #eef2f7;
+            color: #be123c;
           }
           .output-body .markdown-cell th,
           .output-body .markdown-cell td {
-            border-color: #334155;
+            border-color: #e5e7eb;
           }
           .output-body .markdown-cell th {
-            background: #1f2937;
-            color: #f8fafc;
+            background: #f8fafc;
+            color: #374151;
           }
           .markdown-cell blockquote {
             margin: 14px 0;
@@ -717,14 +668,7 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
         <header class="notebook-topbar">
           <div class="topbar-inner">
             <div class="notebook-heading">
-              <p class="eyebrow">GitHub notebook</p>
               <h1>${escapeHtml(title)}</h1>
-              <div class="meta-row">
-                <span class="meta-pill">${escapeHtml(kernel)}</span>
-                <span class="meta-pill">${notebookCells.length} cells</span>
-                <span class="meta-pill">${codeCellCount} code</span>
-                <span class="meta-pill">${markdownCellCount} markdown</span>
-              </div>
             </div>
             <a class="github-link" href="${escapeHtml(sourceUrl)}" rel="noopener noreferrer">Open on GitHub</a>
           </div>
@@ -743,7 +687,7 @@ function renderNotebookCell(cell, index) {
   if (cell.cell_type === "markdown") {
     return `
       <section class="notebook-cell markdown-cell">
-        <div class="cell-label">Md</div>
+        <div class="cell-label"></div>
         <article class="cell-card">${renderMarkdown(source)}</article>
       </section>
     `;
@@ -758,14 +702,10 @@ function renderNotebookCell(cell, index) {
       <section class="notebook-cell code-cell">
         <div class="cell-label">In [${escapeHtml(executionCount || " ")}]</div>
         <article class="cell-card">
-          <div class="cell-toolbar">
-            <span class="cell-kind">Python</span>
-            <span class="exec-count">cell ${index + 1}</span>
-          </div>
           <pre class="code-block"><code>${highlightPython(source)}</code></pre>
-          ${outputs ? `<div class="output-stack">${outputs}</div>` : ""}
         </article>
       </section>
+      ${outputs ? `<div class="output-stack">${outputs}</div>` : ""}
     `;
   }
 
