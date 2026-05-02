@@ -1,18 +1,31 @@
 // --- Data for Notebooks ---
+const GITHUB_NOTEBOOK_BASE =
+  "https://github.com/RitikDutta/notebooks_ritikdutta/blob/master/notebooks";
+
+function createGithubNotebookUrl(category, fileName) {
+  return `${GITHUB_NOTEBOOK_BASE}/${encodeURIComponent(category)}/${encodeURIComponent(fileName)}`;
+}
+
 // Machine Learning Notebooks
 const notebooksML = {
   1: {
     title: "Business Research Truck Delivery",
     slug: "EDA and Actual business case study",
     thumbnail: "media/Business_Research_Truck_Delivery.png",
-    gist: "https://gist.github.com/RitikDutta/79fff6ae19d74c2d8258403af7b282b4.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "business_research_truck_delivery.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Business Case Study<br><strong>Example:</strong>Custom Mathematical functions, EDA, Machine Learning"
   },
   2: {
     title: "EDA and Classification predictive modelling",
     slug: "regression_notebook",
-    gist: "https://gist.github.com/RitikDutta/3d3a0f6fb1e5232c2cc65d08c1565178.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "real_eda_with_96_accuracy_xgb.ipynb"
+    ),
     thumbnail: "media/eda_predictive.png",
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Binary Classification And EDA"
@@ -21,7 +34,10 @@ const notebooksML = {
     title: "Car Price Prediction EDA",
     slug: "logistic regression1",
     thumbnail: "media/car_eda.png",
-    gist: "https://gist.github.com/RitikDutta/333512e9e5dbef7ae44bb0e22528f5da.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "car_price_prediction.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> EDA for car price"
   },
@@ -29,7 +45,10 @@ const notebooksML = {
     title: "Employee Salary Prediction",
     slug: "logistic regression2",
     thumbnail: "media/employee_salary.png",
-    gist: "https://gist.github.com/RitikDutta/24c4095a6b39097789c7f2e06000c389.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "logistic_regression_employee_salary_prediction.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Logistic regression<br><strong>Example:</strong> simple Employee salary prediction"
   },  
@@ -37,7 +56,10 @@ const notebooksML = {
     title: "Multi Model Comparison",
     slug: "multi model",
     thumbnail: "media/multi_model_comparison.png",
-    gist: "https://gist.github.com/RitikDutta/888582721bcbe4c8d247829b35e3703f.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "multi_model_comparison.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Regression<br><strong>Example:</strong> (Linear, Robust, Ridge, Lasso, ElasticNet, Polinomial, RF, SVM) Regression, SGD, ANN"
   },
@@ -45,7 +67,10 @@ const notebooksML = {
     title: "Insurence Charges",
     slug: "linear regression 2",
     thumbnail: "media/insurance_prediction.png",
-    gist: "https://gist.github.com/RitikDutta/2e2b7f6ef57b40422f66f80f37350185.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "insurence_charges_linear_regression.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Linear Regression<br><strong>Example:</strong> linear regression on insurence cost"
   },
@@ -53,7 +78,10 @@ const notebooksML = {
     title: "Loan Approval Prediction",
     slug: "Classification",
     thumbnail: "media/loan_approval_prediction.png",
-    gist: "https://gist.github.com/RitikDutta/b54338c05b17c589820449c40ff7724c.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "loan_approval_prediction.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Logistic regression, Random Forest, XG-Boost"
   },
@@ -61,7 +89,10 @@ const notebooksML = {
     title: "MNIST Classification",
     slug: "MNIST-Classification",
     thumbnail: "media/mnist_classification.png",
-    gist: "https://gist.github.com/RitikDutta/4207ddff5d66affa1951052a0c15c2b4.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "mnist_classification.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD Classifier, Random Forest, KNN"
   },
@@ -69,7 +100,10 @@ const notebooksML = {
     title: "Multi Model Classification",
     slug: "multi-model-Classification",
     thumbnail: "media/multi_model_classification.png",
-    gist: "https://gist.github.com/RitikDutta/34ef9fb92e36f38cf35d8c65e51d5ecf.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "multiple_model_classification.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> SGD, RF, KNN, ..."
   },
@@ -77,7 +111,10 @@ const notebooksML = {
     title: "Support Vector Machine",
     slug: "multi-model-Classification",
     thumbnail: "media/svm_classification.png",
-    gist: "https://gist.github.com/RitikDutta/fd8b4d43aec5c2a439540a721b694412.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "support_vector_machine_classification.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Support vector machine Classification"
   },
@@ -85,7 +122,10 @@ const notebooksML = {
     title: "Bagging and pasting Voting Classifier",
     slug: "voting-Classification",
     thumbnail: "media/bagging_pasting_voting.png",
-    gist: "https://gist.github.com/RitikDutta/288e099213e0c9c725002877c676e1fb.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "Machine Learning Notebooks",
+      "bagging_and_pasting.ipynb"
+    ),
     details:
       "<strong>Task:</strong> Classification<br><strong>Example:</strong> Voting Classifier"
   },
@@ -97,7 +137,10 @@ const nlpNotebooks = {
     title: "LangGraph",
     slug: "LangGraph",
     thumbnail: "media/langraph.png",
-    gist: "https://gist.github.com/RitikDutta/02e7db7a7950437c40a897b5a62612b5.js",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "LangGraph LangChain NLP Notebooks",
+      "langgraph.ipynb"
+    ),
     details:
       "<strong>Task:</strong> LangGraph<br><strong>Example:</strong> LangGraph, Agents, Threads, Databases"
   }
@@ -109,8 +152,10 @@ const llmNotebooks = {
     title: "fine tuining",
     slug: "llm-notebook",
     thumbnail: "media/notebook_logo.png",
-    githubNotebookUrl:
-      "https://github.com/RitikDutta/notebooks_ritikdutta/blob/master/notebooks/colab_5b_class_qlora_finetuning_.ipynb",
+    githubNotebookUrl: createGithubNotebookUrl(
+      "LLM Notebooks",
+      "colab_5b_class_qlora_finetuning_.ipynb"
+    ),
     details: "finetuned 1.5B model"
   }
 };
@@ -250,8 +295,6 @@ function openNotebook(id, section) {
   // Render the notebook source inside the iframe if available.
   if (notebook.githubNotebookUrl) {
     renderGithubNotebookInIframe(iframe, notebook.githubNotebookUrl);
-  } else if (notebook.gist) {
-    embedGistInIframe(iframe, notebook.gist);
   } else if (notebook.iframeSrc) {
     iframe.src = notebook.iframeSrc;
   }
@@ -1071,35 +1114,6 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-}
-
-// --- Function to embed a GitHub Gist inside an iframe ---
-function embedGistInIframe(iframe, gistUrl) {
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <base target="_parent">
-        <style>
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-          }
-          .gist {
-            width: 100%;
-          }
-        </style>
-      </head>
-      <body>
-        <script src="${gistUrl}"></script>
-      </body>
-    </html>
-  `);
-  doc.close();
 }
 
 // --- Close the notebook viewer ---
