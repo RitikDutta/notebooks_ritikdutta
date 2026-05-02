@@ -571,6 +571,17 @@ function writeNotebookHtml(iframe, notebook, sourceUrl) {
             background: var(--output-panel);
             color: var(--output-ink);
           }
+          .html-frame-output {
+            width: 100%;
+            min-height: 520px;
+            border: 0;
+            display: block;
+            background: var(--output-panel);
+          }
+          .map-frame-output {
+            aspect-ratio: 5 / 3;
+            min-height: 440px;
+          }
           .html-output table,
           .markdown-cell table {
             width: 100%;
@@ -773,7 +784,7 @@ function renderNotebookOutput(output, executionCount) {
   if (data["text/html"]) {
     return renderOutputBlock(
       label,
-      `<div class="html-output">${sanitizeNotebookHtml(notebookSourceToString(data["text/html"]))}</div>`
+      renderHtmlOutput(notebookSourceToString(data["text/html"]))
     );
   }
 
@@ -996,6 +1007,43 @@ function getPythonTokenClass(token) {
   }
 
   return "tok-keyword";
+}
+
+function renderHtmlOutput(html) {
+  const embeddedFrameHtml = getEmbeddedFrameHtml(html);
+  if (embeddedFrameHtml) {
+    return renderSandboxedHtmlFrame(embeddedFrameHtml, "map-frame-output");
+  }
+
+  if (containsExecutableHtml(html)) {
+    return renderSandboxedHtmlFrame(html);
+  }
+
+  return `<div class="html-output">${sanitizeNotebookHtml(html)}</div>`;
+}
+
+function getEmbeddedFrameHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const embeddedFrame = template.content.querySelector("iframe[srcdoc]");
+
+  return embeddedFrame?.getAttribute("srcdoc") || "";
+}
+
+function containsExecutableHtml(html) {
+  return /<(script|iframe|object|embed)\b/i.test(html);
+}
+
+function renderSandboxedHtmlFrame(html, extraClass = "") {
+  const className = ["html-frame-output", extraClass].filter(Boolean).join(" ");
+  return `
+    <iframe
+      class="${className}"
+      sandbox="allow-scripts allow-popups allow-forms"
+      referrerpolicy="no-referrer-when-downgrade"
+      srcdoc="${escapeHtml(html)}"
+    ></iframe>
+  `;
 }
 
 function sanitizeNotebookHtml(html) {
